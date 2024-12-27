@@ -5,12 +5,13 @@ class order{
         float price;
         int volume;
         int type;
-        int UserId;
+        int userId;
         int id;
     public:
-        order(int price_,int volume_,int type_,int userId_);
+        order(int price_,int volume_,int type_,int userId_,int id_);
         float getPrice(); 
         int getVolume();
+        void setVolume(int newVolume);
         int getType();
         int getUserId();
         int getId();
@@ -23,8 +24,10 @@ class priceLevel{
         int volume;
     
     public:
-        //insert the order in its correct position (the order list is sorted)
-        void add(order ordo);
+        priceLevel();
+        priceLevel(order order_); 
+        //insert the order in its correct position (the orders list is sorted)
+        void add(order order_);
 
         //returns the price of the current price level 
         float getPrice(); 
