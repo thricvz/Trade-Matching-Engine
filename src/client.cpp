@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <cstdlib>
 
+
 int main(){
     int clientSocket = socket(AF_INET, SOCK_STREAM, 0);    
 
@@ -30,6 +31,7 @@ int main(){
         std::cout <<"enter message : ";
         std::cin >> buffer;
         send(clientSocket,&buffer, sizeof(buffer),0);
+
         if(strcmp(buffer,"exit")==0){
             shutdown(clientSocket,SHUT_RDWR);
             close(clientSocket);
