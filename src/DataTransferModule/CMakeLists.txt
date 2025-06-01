@@ -7,6 +7,4 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 include_directories(include)
 
-add_subdirectory(DataTransferModule)
-add_executable(server server.cpp)
-add_executable(client client.cpp)
+add_library(requestModule requestClass.cpp)
