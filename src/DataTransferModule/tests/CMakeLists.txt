@@ -8,4 +8,7 @@ find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
 
 add_executable(test tests.cpp)
+add_executable(aux aux.cpp)
+
 target_link_libraries(test GTest::gtest_main requestModule)
+target_link_libraries(aux requestModule)
