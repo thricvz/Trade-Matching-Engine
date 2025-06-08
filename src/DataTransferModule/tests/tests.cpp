@@ -65,11 +65,3 @@ TEST(Serialization, FullRequest){
     EXPECT_TRUE(requestRestore==unchangedRequest);
 
 }
-
-
-
-TEST(SERIALIZATION,DANGLING_CHAR_POINTER){
-
-
-
-};
