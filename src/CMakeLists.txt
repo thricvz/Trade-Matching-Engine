@@ -6,7 +6,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include_directories(include)
+include_directories(DataTransferModule/include)
+
 
 add_subdirectory(DataTransferModule)
 add_executable(server server.cpp)
 add_executable(client client.cpp)
+
+target_link_libraries(server requestModule)

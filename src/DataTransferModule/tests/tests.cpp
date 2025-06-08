@@ -40,3 +40,36 @@ TEST(Serialization, TextArguments){
     EXPECT_TRUE(requestRestore==unchangedRequest);
 
 }
+
+
+TEST(Serialization, FullRequest){
+    
+    uint8_t msgCommand = 88;
+    uint8_t msgType = 45;
+
+    char w1[] = "sve";
+    char w2[] = "the ";
+    char w3[] = "woworrldwide";
+    char w4[] = "ffldl";
+
+    std::vector<char*> args = {w1,w2,w3};
+    std::vector<int32_t> numericArgs = {32,45,65};
+
+    request requestToSerialize(msgCommand,msgType,args,numericArgs);
+    request unchangedRequest(msgCommand,msgType,args,numericArgs);
+
+    std::vector<uint8_t> byteStream = requestToSerialize.serialize();
+    request requestRestore;
+    requestRestore.deserialize(byteStream);
+
+    EXPECT_TRUE(requestRestore==unchangedRequest);
+
+}
+
+
+
+TEST(SERIALIZATION,DANGLING_CHAR_POINTER){
+
+
+
+};

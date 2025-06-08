@@ -51,7 +51,7 @@ void request::serialize_args(vector<uint8_t> &stream,std::vector<char*> args_){
 
     for(int i =0;i<args_.size();i++){
         char *currentString = args_[i];
-        vector<uint8_t>::iterator indexStringSize = stream.end();
+        int indexStringSize = stream.size();
         uint8_t stringSize = 0;
 
         while(*currentString){
@@ -59,9 +59,8 @@ void request::serialize_args(vector<uint8_t> &stream,std::vector<char*> args_){
             currentString++;
             stringSize++;
         };
-        
         stream.push_back('\0');
-        stream.insert(indexStringSize,stringSize);
+        stream.insert(stream.begin()+indexStringSize,stringSize+1);
     }
 };
 

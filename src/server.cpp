@@ -4,7 +4,8 @@
 #include <thread>
 #include <cstring>
 #include <vector>
-
+#include "requestClass.h"
+#include "byteCodes.h"  
 
 const int MAX_CONNECTIONS=3;
 
