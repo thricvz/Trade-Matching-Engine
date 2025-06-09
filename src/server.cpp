@@ -11,14 +11,15 @@ const int MAX_CONNECTIONS=3;
 
 //something for handling the messages 
 void handleConnection(int clientSocket){
-    char buffer[128];
+    std::cout <<"new client\n";
+    uint8_t buffer[128];
     while(true){
-        recv(clientSocket,&buffer,sizeof(buffer),0);
-        //check if exit command is send
-        if(strcmp(buffer,"exit")==0){
-            break;
-        }
-        std::cout << buffer << std::endl;
+        int received = recv(clientSocket,&buffer,sizeof(buffer),0);
+        
+        //if(strcmp(buffer,"exit")==0){
+            //break;
+        //} 
+        std::cout << "Nbytes received: " << received << std::endl;
     }
 };
 

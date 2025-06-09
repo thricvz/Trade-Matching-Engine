@@ -4,7 +4,7 @@
 #include <cstring>
 #include <unistd.h>
 #include <cstdlib>
-
+#include "ChunkTransmission.h"
 
 int main(){
     int clientSocket = socket(AF_INET, SOCK_STREAM, 0);    
@@ -25,17 +25,13 @@ int main(){
     //main loop
     std::cout << "Connected to the server!" << std::endl;
     std::cout << connectionSuccess ;
-    char buffer[128];
+
+    std::vector<uint8_t> values = {0x65,0x75,0x65,0x75,0x65,0x75};
     while(true){
         //read the messages and print them
-        std::cout <<"enter message : ";
-        std::cin >> buffer;
-        send(clientSocket,&buffer, sizeof(buffer),0);
-
-        if(strcmp(buffer,"exit")==0){
-            shutdown(clientSocket,SHUT_RDWR);
-            close(clientSocket);
-            break;
-        }
+        //std::cout << "hl";
+        sendChunk(clientSocket,values);
+        
+        
     }
 }

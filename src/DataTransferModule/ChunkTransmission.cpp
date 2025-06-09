@@ -40,3 +40,6 @@ void sendChunk(int senderFD,vector<uint8_t> byteStream){
 };
 
 
+void receiveChunks(int senderFD,vector<uint8_t> &byteStream){
+ 
+}
