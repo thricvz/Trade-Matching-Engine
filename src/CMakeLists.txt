@@ -13,5 +13,5 @@ add_subdirectory(DataTransferModule)
 add_executable(server server.cpp)
 add_executable(client client.cpp)
 
-target_link_libraries(server requestModule chunkModule)
-target_link_libraries(client requestModule chunkModule)
+target_link_libraries(server DataTransmissionModule)
+target_link_libraries(client DataTransmissionModule)

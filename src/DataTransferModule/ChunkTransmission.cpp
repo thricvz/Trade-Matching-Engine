@@ -1,5 +1,5 @@
 #include "ChunkTransmission.h"
-
+#include <iostream>
 
 void loadBuffer(uint8_t* buffer,vector<uint8_t> byteStream,int sectionStart){
     uint8_t loadedDataSize = 0;    
@@ -39,7 +39,25 @@ void sendChunk(int senderFD,vector<uint8_t> byteStream){
     }
 };
 
-
+bool loadVector(vector<uint8_t> &byteStream,uint8_t *buffer){
+    int lastMsgByte = buffer[0];
+    for(int byteIndex=1;byteIndex <=lastMsgByte;byteIndex++){
+        byteStream.push_back(buffer[byteIndex]);
+    }
+    return lastMsgByte != (CHUNK_SIZE-1);
+}
 void receiveChunks(int senderFD,vector<uint8_t> &byteStream){
- 
+    uint8_t buffer[BUFFER_SIZE];
+    while (true)
+    {   
+        int receivedBytes = recv(senderFD,&buffer,sizeof(buffer),0) ; 
+        if(receivedBytes!=-1 || receivedBytes!=0){
+            std::cout<<"new chunk received";
+            bool lastBuffer = loadVector(byteStream,buffer);
+            if(lastBuffer)
+                break;
+        }
+    };
+    
+    
 }

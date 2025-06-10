@@ -8,6 +8,5 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_BUILD_TYPE Debug)
 include_directories(include)
 
-add_library(requestModule requestClass.cpp)
-add_library(chunkModule ChunkTransmission.cpp)
+add_library(DataTransmissionModule requestClass.cpp ChunkTransmission.cpp requestHandler.cpp )
 add_subdirectory(tests)

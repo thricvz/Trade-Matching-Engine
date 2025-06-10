@@ -6,20 +6,17 @@
 #include <vector>
 #include "requestClass.h"
 #include "byteCodes.h"  
+#include "ChunkTransmission.h"
 
 const int MAX_CONNECTIONS=3;
 
 //something for handling the messages 
 void handleConnection(int clientSocket){
     std::cout <<"new client\n";
-    uint8_t buffer[128];
+    vector<uint8_t> msg;
     while(true){
-        int received = recv(clientSocket,&buffer,sizeof(buffer),0);
-        
-        //if(strcmp(buffer,"exit")==0){
-            //break;
-        //} 
-        std::cout << "Nbytes received: " << received << std::endl;
+        receiveChunks(clientSocket,msg);
+
     }
 };
 

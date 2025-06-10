@@ -9,4 +9,4 @@ include_directories(${GTEST_INCLUDE_DIRS})
 
 add_executable(test tests.cpp)
 
-target_link_libraries(test GTest::gtest_main requestModule)
+target_link_libraries(test GTest::gtest_main DataTransmissionModule)
