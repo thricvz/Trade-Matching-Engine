@@ -41,7 +41,7 @@ void RequestSender::constructMessageRequest(){
     std::cout << "Please enter your message: ";
     std::cin >> message;
     
-    request msgRequest(0,0,{message});
+    request msgRequest(MSG,MSG,{message});
     vector<uint8_t> serializedData=msgRequest.serialize();
 
     sendChunk(clientSocket,serializedData);
@@ -53,18 +53,18 @@ RequestHandler::RequestHandler(int clientSocket_){
 };
 
 void RequestHandler::handleInput(){
-    request requestReceived;
     vector<uint8_t> serializedRequest;
     while(true){
         receiveChunks(clientSocket,serializedRequest);
+        request requestReceived;
         requestReceived.deserialize(serializedRequest);
         //decide which action to perform according to the data
         //quick implementation
         
         if(requestReceived.getMessageCommand() == END_STREAM){
             break;
+        }else if(requestReceived.getMessageCommand() == MSG){
+            std::cout << requestReceived.getTextArgs()[0] << std::endl;
         }
-        
-
     }
 }

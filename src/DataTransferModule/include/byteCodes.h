@@ -8,6 +8,7 @@ const uint8_t ORDERBOOK = 0X69;
 const uint8_t BUY = 0x68;
 const uint8_t SELL = 0x77;
 const uint8_t END_STREAM = 0x22;
+const uint8_t MSG = 0x23;
 
 
 //DATA TYPES
