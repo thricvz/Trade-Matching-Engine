@@ -1,6 +1,8 @@
 {
     "cmake.sourceDirectory": "/home/eric/Projects/Server/src",
     "files.associations": {
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "iostream": "cpp",
+        "vector": "cpp"
     }
 }

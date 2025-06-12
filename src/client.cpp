@@ -5,10 +5,13 @@
 #include <unistd.h>
 #include <cstdlib>
 #include "ChunkTransmission.h"
+#include "requestHandler.hpp"
 
 int main(){
     int clientSocket = socket(AF_INET, SOCK_STREAM, 0);    
 
+    //own datastructures for handling the advice
+    RequestSender RequestHandler(clientSocket);    
     //the server
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
@@ -27,11 +30,8 @@ int main(){
     std::cout << connectionSuccess ;
 
     std::vector<uint8_t> values = {0x65,0x75,0x65,0x75,0x65,0x75};
-    while(true){
-        //read the messages and print them
-        //std::cout << "hl";
-        sendChunk(clientSocket,values);
-        
-        
-    }
+    
+
+    RequestHandler.handleInput();
+    std::exit(0);
 }

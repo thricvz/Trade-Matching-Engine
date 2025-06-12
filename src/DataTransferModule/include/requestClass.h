@@ -21,13 +21,20 @@ class request{
     void deserializeStringList(vector<uint8_t> &Data,int listSize,int &listIndex);
 
     public:
-    request();
-    request(uint8_t messageType_,uint8_t messageCommand_,vector<int32_t> args_);
-    request(uint8_t messageType_,uint8_t messageCommand_,vector<char*> args_);
-    request(uint8_t messageType_,uint8_t messageCommand_,vector<char*> textargs_,vector<int32_t> numericargs_);
+        request();
+        request(uint8_t messageType_,uint8_t messageCommand_,vector<int32_t> args_);
+        request(uint8_t messageType_,uint8_t messageCommand_,vector<char*> args_);
+        request(uint8_t messageType_,uint8_t messageCommand_,vector<char*> textargs_,vector<int32_t> numericargs_);
 
-    vector<uint8_t> serialize();
-    void deserialize(vector<uint8_t>);
-    bool operator==(request const &lhs);
+        vector<uint8_t> serialize();
+        void deserialize(vector<uint8_t>);
+        bool operator==(request const &lhs);
+
+        //getters
+        vector<char*> getTextArgs();
+        vector<int32_t> getNumericArgs();
+        uint8_t getMessageCommand();
+        uint8_t getMessageType();
+
 };
 //serialize method first bit should contain the size in bits of the whole mes

@@ -7,17 +7,17 @@
 #include "requestClass.h"
 #include "byteCodes.h"  
 #include "ChunkTransmission.h"
+#include "requestHandler.hpp"
 
 const int MAX_CONNECTIONS=3;
 
 //something for handling the messages 
 void handleConnection(int clientSocket){
     std::cout <<"new client\n";
-    vector<uint8_t> msg;
-    while(true){
-        receiveChunks(clientSocket,msg);
-
-    }
+    
+    RequestHandler requestHandler(clientSocket);
+    requestHandler.handleInput();
+    shutdown(clientSocket,2);
 };
 
 int main(){

@@ -44,6 +44,19 @@ vector<uint8_t> request::serialize(){
     return encoded_data;
 };
 
+vector<char*> request::getTextArgs(){
+    return textArgs;
+};
+vector<int32_t> request::getNumericArgs(){
+    return numericArgs;
+};
+uint8_t request::getMessageCommand(){
+    return messageCommand;
+};
+uint8_t request::getMessageType(){
+    return messageType;
+};
+
 void request::serialize_args(vector<uint8_t> &stream,std::vector<char*> args_){
     stream.push_back(LIST);
     stream.push_back(STRING);

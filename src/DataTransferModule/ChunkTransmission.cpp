@@ -48,14 +48,12 @@ bool loadVector(vector<uint8_t> &byteStream,uint8_t *buffer){
 }
 void receiveChunks(int senderFD,vector<uint8_t> &byteStream){
     uint8_t buffer[BUFFER_SIZE];
-    while (true)
+    bool lastBuffer=  false;
+    while (!lastBuffer)
     {   
         int receivedBytes = recv(senderFD,&buffer,sizeof(buffer),0) ; 
         if(receivedBytes!=-1 || receivedBytes!=0){
-            std::cout<<"new chunk received";
-            bool lastBuffer = loadVector(byteStream,buffer);
-            if(lastBuffer)
-                break;
+            lastBuffer = loadVector(byteStream,buffer);
         }
     };
     
