@@ -3,7 +3,7 @@
 
 //MESSAGE TYPES
 const uint8_t ORDERBOOK = 0X69;
-
+const uint8_t COMMUNICATION = 0X56;
 //COMMANDS  TYPES
 const uint8_t BUY = 0x68;
 const uint8_t SELL = 0x77;
@@ -18,4 +18,3 @@ const uint8_t LIST =  0x90;
 
 
 const int MAX_MSG_LENGTH = 200;
-

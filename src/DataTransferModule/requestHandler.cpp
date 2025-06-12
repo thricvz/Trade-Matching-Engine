@@ -1,5 +1,6 @@
 #include "requestHandler.hpp"
 #include <unistd.h>
+#include <stdio.h>
 
 RequestSender::RequestSender(int clientSocket_){
     clientSocket =  clientSocket_;
@@ -25,23 +26,26 @@ void RequestSender::handleInput(){
 
 void RequestSender::constructExitRequest(){
     exitDemanded = true;
-    request endRequest(END_STREAM,0,{},{});
+    request endRequest(COMMUNICATION,END_STREAM,{},{});
     vector<uint8_t> serializedData=endRequest.serialize();
 
     sendChunk(clientSocket,serializedData);
 }
 
 void RequestSender::constructUnkownRequest(){
-    std::cout << "The request you entered is unkown\n";
+    std::cout << "UNKNOWN COMMAND\n";
 };
 
 
 void RequestSender::constructMessageRequest(){
     char message[MAX_MSG_LENGTH];
     std::cout << "Please enter your message: ";
-    std::cin >> message;
     
-    request msgRequest(MSG,MSG,{message});
+    std::cin.ignore();
+    std::cin.getline(message,MAX_MSG_LENGTH-1);  
+    std::cout << "\n";
+
+    request msgRequest(COMMUNICATION,MSG,{message});
     vector<uint8_t> serializedData=msgRequest.serialize();
 
     sendChunk(clientSocket,serializedData);
@@ -66,5 +70,7 @@ void RequestHandler::handleInput(){
         }else if(requestReceived.getMessageCommand() == MSG){
             std::cout << requestReceived.getTextArgs()[0] << std::endl;
         }
+        //clean the serializedRequest
+        serializedRequest.clear();
     }
 }
