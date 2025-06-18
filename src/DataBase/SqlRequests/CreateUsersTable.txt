@@ -1,0 +1,10 @@
+CREATE TABLE Users ( 
+  id INTEGER PRIMARY KEY AUTOINCREMENT, 
+  username VARCHAR(20),
+  password VARCHAR(20),
+  dollars INTEGER,
+  cents INTEGER
+);
+
+
+

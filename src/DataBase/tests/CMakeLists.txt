@@ -7,6 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
 
+add_executable(DataBaseModuleTESTS tests.cpp)
 
-add_executable(DataTransmissionModuleTESTS tests.cpp)
-target_link_libraries(DataTransmissionModuleTESTS GTest::gtest_main DataTransmissionModule)
+target_link_libraries(DataBaseModuleTESTS GTest::gtest_main DataBaseModule)

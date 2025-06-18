@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+set(ENABLE_TESTS ON)
+
 include_directories(include)
 include_directories(DataTransferModule/include)
 include_directories(Database/include)
