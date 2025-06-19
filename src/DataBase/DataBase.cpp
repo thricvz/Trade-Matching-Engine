@@ -2,6 +2,12 @@
 #include <fstream>
 #include <iostream>
 
+static int UserFoundCallback(void *returnVal, int count, char **data, char **columns)
+{
+    bool *UserFound = static_cast<bool*>(returnVal);
+    *UserFound = count >0;
+    return 0;
+}
 
 DataBase::DataBase(const char *PATH){
     filePath= string(PATH);
@@ -22,12 +28,29 @@ int DataBase::connect(){
 void DataBase::createDB(){
     string sqlRequest;
     loadScript("CreateUsersTable.txt",sqlRequest);
-    sqlite3_exec(db,sqlRequest.c_str(),NULL,nullptr,nullptr);
+    sqlite3_exec(db,sqlRequest.c_str(),NULL,nullptr,nullptr);   
     
 };
+
 //functions for the login functionality 
-int DataBase::registerUser(const char* username, const char* password){
-    return 0;
+int DataBase::registerUser(string username, string password){
+    
+    map<string,string> tags = {{"@password",password},{"@username",username}};
+    string sqlRequest;
+    bool foundUser = false;
+    //check if user already exists
+    loadScript("RetrieveUsername.txt",sqlRequest,tags);
+    sqlite3_exec(db,sqlRequest.c_str(),UserFoundCallback,&foundUser,nullptr);   
+    
+    if(foundUser)
+        return USER_EXISTS_ERROR;
+
+
+    //register user
+    loadScript("RegisterUser.txt",sqlRequest,tags);
+    sqlite3_exec(db,sqlRequest.c_str(),NULL,nullptr,nullptr);   
+
+    return REGISTER_SUCCESS;
 };
 
 void DataBase::loadScript(string scriptName,string &requestBuffer){
@@ -40,7 +63,38 @@ void DataBase::loadScript(string scriptName,string &requestBuffer){
     };
 };
 
-int DataBase::getUserId(const char* username, const char* password){
+void DataBase::loadScript(string scriptName,string &requestBuffer, map<string,string> &tags){
+    scriptName = "/home/eric/Projects/Server/src/DataBase/SqlRequests/" + scriptName;
+    std::ifstream script(scriptName.c_str());
+    string line;
+
+    
+    while(getline(script,line)){
+        replaceTagsInLine(line,tags);
+        requestBuffer += line;
+    };
+};
+
+
+void DataBase::replaceTagsInLine(string &buffer,map<string,string> &tags){
+    for(auto pair = tags.begin(); pair != tags.end(); ++pair){
+
+        string tag = pair->first;
+        string replacement = pair->second;
+
+        int replacementLength =  tag.size();
+        
+        int searchStart = 0;
+        int startOfTag = buffer.find(tag,searchStart);
+
+        while(startOfTag!=string::npos){
+            buffer.replace(startOfTag,replacementLength,replacement);
+            searchStart=startOfTag+replacementLength;
+            startOfTag = buffer.find(tag,searchStart);
+        }
+    }
+};
+int DataBase::getUserId(string username, string password){
     return 0;
 
 };

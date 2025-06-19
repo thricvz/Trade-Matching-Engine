@@ -1,0 +1,1 @@
+Insert into Users Values (NULL,"@username","@password",200,10);
