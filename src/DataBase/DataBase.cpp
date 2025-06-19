@@ -2,11 +2,12 @@
 #include <fstream>
 #include <iostream>
 
+
 DataBase::DataBase(const char *PATH){
     filePath= string(PATH);
     if(connect()!=CONNECT_SUCCESS)
-        createDB();        
-    
+        throw std::runtime_error("Cant  open database");
+    createDB();
 };
 DataBase::~DataBase(){
     sqlite3_close(db);
@@ -19,13 +20,9 @@ int DataBase::connect(){
     
 }
 void DataBase::createDB(){
-    std::ofstream DataBaseFile(filePath.c_str());
-    connect();
-
-
     string sqlRequest;
     loadScript("CreateUsersTable.txt",sqlRequest);
-    std::cout << sqlRequest;
+    sqlite3_exec(db,sqlRequest.c_str(),NULL,nullptr,nullptr);
     
 };
 //functions for the login functionality 
@@ -34,7 +31,7 @@ int DataBase::registerUser(const char* username, const char* password){
 };
 
 void DataBase::loadScript(string scriptName,string &requestBuffer){
-    scriptName = "SqlRequests/" + scriptName;
+    scriptName = "/home/eric/Projects/Server/src/DataBase/SqlRequests/" + scriptName;
     std::ifstream script(scriptName.c_str());
     string line;
 

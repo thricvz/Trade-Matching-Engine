@@ -4,3 +4,9 @@
 TEST(DataBaseModule,ConstructExistingDataBase){
     DataBase db("test.db");
 }
+
+
+TEST(DataBaseModule,CreateNewDataBase){
+    DataBase db("new.db");
+}
+
