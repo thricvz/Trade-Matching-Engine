@@ -5,4 +5,4 @@ const int CONNECT_FAILED=0x98;
 
 //register codes 
 const int REGISTER_SUCCESS = 0x97;
-const int USER_EXISTS_ERROR = 0x96;
+const int USER_DUPLICATE_ERROR = 0x96;

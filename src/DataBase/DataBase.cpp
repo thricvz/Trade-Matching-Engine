@@ -2,6 +2,8 @@
 #include <fstream>
 #include <iostream>
 
+
+//Callback Functions
 static int UserFoundCallback(void *returnVal, int count, char **data, char **columns)
 {
     bool *UserFound = static_cast<bool*>(returnVal);
@@ -9,6 +11,9 @@ static int UserFoundCallback(void *returnVal, int count, char **data, char **col
     return 0;
 }
 
+
+
+//Class Methods
 DataBase::DataBase(const char *PATH){
     filePath= string(PATH);
     if(connect()!=CONNECT_SUCCESS)
@@ -43,7 +48,7 @@ int DataBase::registerUser(string username, string password){
     sqlite3_exec(db,sqlRequest.c_str(),UserFoundCallback,&foundUser,nullptr);   
     
     if(foundUser)
-        return USER_EXISTS_ERROR;
+        return USER_DUPLICATE_ERROR;
 
 
     //register user
