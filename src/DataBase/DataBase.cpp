@@ -10,6 +10,13 @@ static int UserFoundCallback(void *returnVal, int count, char **data, char **col
     *UserFound = count >0;
     return 0;
 }
+//no duplicates allowed in the database
+static int RetrieveUserIdCallback(void *outId, int count, char **data, char **columns){
+    int *userId = static_cast<int*>(outId); 
+    *userId =atoi(data[0]);
+    return 0;
+
+}
 
 
 
@@ -100,8 +107,13 @@ void DataBase::replaceTagsInLine(string &buffer,map<string,string> &tags){
     }
 };
 int DataBase::getUserId(string username, string password){
-    return 0;
+    map<string,string> tags = {{"@password",password},{"@username",username}};
+    string sqlRequest;
+    int userId = USER_NOT_FOUND;
+    loadScript("RetrieveUserId.txt",sqlRequest,tags);
+    sqlite3_exec(db,sqlRequest.c_str(),RetrieveUserIdCallback,&userId,nullptr);   
 
+    return userId;
 };
 
 //functions for updating the user account balance

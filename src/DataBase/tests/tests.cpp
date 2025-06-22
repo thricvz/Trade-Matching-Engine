@@ -1,11 +1,12 @@
 #include <gtest/gtest.h>
 #include <cstdlib>
 #include "DataBase.hpp"
-
+#include "DataBaseCommunicationCodes.hpp"
 //change the default argument for each platform
 void cleanup(const std::string& filename,std::string removeCommand="rm"){
     removeCommand +=" " + filename;
     std::system(removeCommand.c_str());
+    
 }
 void createFile(const std::string& filename,std::string createFileCommand = "touch"){
     createFileCommand += " " + filename;
@@ -39,5 +40,20 @@ TEST(UserRegistration,existingUser){
     //same username
     EXPECT_EQ(db.registerUser("double","chiefkiefisgoated"),USER_DUPLICATE_ERROR);
     
+    cleanup("new.db");
+}
+
+
+TEST(DataInteraction,getId){
+    cleanup("new.db");
+    
+    DataBase db("new.db");
+    db.registerUser("eric","mylittleponey");
+    db.registerUser("davi","mysecretpassword");
+
+    EXPECT_EQ(db.getUserId("davi","mysecretpassword"),2);
+    EXPECT_EQ(db.getUserId("eric","mylittleponey"),1);
+    EXPECT_EQ(db.getUserId("anon","an0nym0us"),USER_NOT_FOUND);
+
     cleanup("new.db");
 }
