@@ -12,7 +12,7 @@ TEST(Initialization,LoadExistingDataBase){
 
 TEST(UserRegistration,CreateNewUser){
     DataBase db("new.db");
-    db.registerUser("eric","mysecretpassword");
+    EXPECT_EQ(db.registerUser("eric","mysecretpassword"),REGISTER_SUCCESS);
 }
 
 TEST(UserRegistration,existingUser){
