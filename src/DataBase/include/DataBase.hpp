@@ -30,6 +30,7 @@ class DataBase{
 
         //methods for data retrieving
         std::pair<int,int> getUserBalance(int userId);
+        void setUserBalance(int userId,int dollars,int cents);
 
 
 

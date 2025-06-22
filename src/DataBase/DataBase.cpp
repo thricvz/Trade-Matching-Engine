@@ -18,7 +18,14 @@ static int RetrieveUserIdCallback(void *outId, int count, char **data, char **co
 
 }
 
+static int RetrieveUserAccountBalanceCallback(void *accountBalance, int count, char **data, char **columns){
+    std::pair<int,int> *accountBalancePair = static_cast<std::pair<int,int>*>(accountBalance);
+    //int the script we first have dollars
+    accountBalancePair->first = atoi(data[0]);
+    accountBalancePair->second = atoi(data[1]);
 
+    return 0;
+}
 
 //Class Methods
 DataBase::DataBase(const char *PATH){
@@ -84,6 +91,7 @@ void DataBase::loadScript(string scriptName,string &requestBuffer, map<string,st
     while(getline(script,line)){
         replaceTagsInLine(line,tags);
         requestBuffer += line;
+        requestBuffer+='\n';
     };
 };
 
@@ -118,5 +126,23 @@ int DataBase::getUserId(string username, string password){
 
 //functions for updating the user account balance
 std::pair<int,int> DataBase::getUserBalance(int userId){
+    map<string,string> tags = {{"@id",std::to_string(userId)}};
+    string sqlRequest;
+    std::pair<int,int> accountBalance;
+    loadScript("RetrieveUserAccountBalance.txt",sqlRequest,tags);
+    sqlite3_exec(db,sqlRequest.c_str(),RetrieveUserAccountBalanceCallback,&accountBalance,nullptr);   
 
+    return accountBalance;
+};
+
+
+void DataBase::setUserBalance(int userId,int dollars,int cents){
+    map<string,string> tags = {
+        {"@id",std::to_string(userId)},
+        {"@dollarsAmount",std::to_string(dollars)},
+        {"@centsAmount",std::to_string(cents)}
+    };
+    string sqlRequest;
+    loadScript("UpdateUserAccountBalance.txt",sqlRequest,tags);
+    sqlite3_exec(db,sqlRequest.c_str(),NULL,nullptr,nullptr);   
 };

@@ -57,3 +57,32 @@ TEST(DataInteraction,getId){
 
     cleanup("new.db");
 }
+
+
+TEST(DataInteraction,getAccountBalance){
+    cleanup("MyDataBase.db");
+    
+    DataBase db("MyDataBase.db");
+    db.registerUser("eric","mylittleponey");
+
+    int userId = db.getUserId("eric","mylittleponey");
+    std::pair<int,int> defaultAccountBalance= {200,10}; 
+    
+    EXPECT_EQ(db.getUserBalance(userId),defaultAccountBalance);
+    cleanup("MyDataBase.db");
+}
+
+
+TEST(DataInteraction,setAccountBalance){
+    cleanup("MyDataBase.db");
+    
+    DataBase db("MyDataBase.db");
+    db.registerUser("eric","mylittleponey");
+
+    int userId = db.getUserId("eric","mylittleponey");
+    db.setUserBalance(userId,0,0);
+    std::pair<int,int> expectedAccountBalance= {0,0}; 
+    
+    EXPECT_EQ(db.getUserBalance(userId),expectedAccountBalance);
+    cleanup("MyDataBase.db");
+}
