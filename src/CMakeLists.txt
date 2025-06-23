@@ -9,7 +9,7 @@ set(ENABLE_TESTS ON)
 
 include_directories(include)
 include_directories(DataTransferModule/include)
-include_directories(Database/include)
+include_directories(DataBase/include)
 
 add_subdirectory(DataBase)
 add_subdirectory(DataTransferModule)
@@ -17,5 +17,5 @@ add_subdirectory(DataTransferModule)
 add_executable(server server.cpp)
 add_executable(client client.cpp)
 
-target_link_libraries(server DataTransmissionModule)
-target_link_libraries(client DataTransmissionModule)
+target_link_libraries(server DataTransmissionModule DataBaseModule)
+target_link_libraries(client DataTransmissionModule DataBaseModule)

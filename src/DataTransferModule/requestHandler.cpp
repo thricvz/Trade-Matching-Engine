@@ -52,25 +52,34 @@ void RequestSender::constructMessageRequest(){
 };
 
 //requesthandler for server
-RequestHandler::RequestHandler(int clientSocket_){
+RequestHandler::RequestHandler(int clientSocket_,DataBase* DBptr){
     clientSocket =  clientSocket_;
+    db = db;
 };
 
 void RequestHandler::handleInput(){
     vector<uint8_t> serializedRequest;
-    while(true){
+    while(connectedToClient){
         receiveChunks(clientSocket,serializedRequest);
         request requestReceived;
         requestReceived.deserialize(serializedRequest);
         //decide which action to perform according to the data
         //quick implementation
-        
-        if(requestReceived.getMessageCommand() == END_STREAM){
-            break;
-        }else if(requestReceived.getMessageCommand() == MSG){
-            std::cout << requestReceived.getTextArgs()[0] << std::endl;
+        switch(requestReceived.getMessageCommand()){
+            case END_STREAM:
+                endConnection();
+                break;
+            case MSG:
+                std::cout << requestReceived.getTextArgs()[0] << std::endl;
+                break;
+            case LOGIN:
+                break;
+            
         }
-        //clean the serializedRequest
         serializedRequest.clear();
     }
+}
+
+void RequestHandler::endConnection(){
+    connectedToClient = false;
 }

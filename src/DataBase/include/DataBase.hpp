@@ -12,9 +12,9 @@ class DataBase{
     sqlite3 *db=nullptr;
     string filePath;
     //methods for the constructor
-
     void createDB();
     int connect();
+    
     //functionality for modular scripts
     void loadScript(string scriptName,string &requestBuffer);
     void loadScript(string scriptName,string &requestBuffer,map<string,string> &tags);
