@@ -18,3 +18,4 @@ const uint8_t LIST =  0x90;
 
 
 const int MAX_MSG_LENGTH = 200;
+const int MAX_CREDENTIALS_LENGTH = 20;

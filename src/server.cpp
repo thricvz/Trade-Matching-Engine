@@ -4,18 +4,24 @@
 #include <thread>
 #include <cstring>
 #include <vector>
+#include <mutex>
 #include "byteCodes.h"  
 #include "ChunkTransmission.h"
 #include "requestClass.h"
 #include "requestHandler.hpp" 
 #include "DataBase.hpp"
+
+std::mutex mtx;
 const int MAX_CONNECTIONS=3;
 DataBase db("DATABASE.db");
 //something for handling the messages 
+
+
+
 void handleConnection(int clientSocket){
     std::cout <<"new client\n";
     
-    RequestHandler requestHandler(clientSocket,&db);
+    RequestHandler requestHandler(clientSocket,&db,&mtx);
     requestHandler.handleInput();
     shutdown(clientSocket,2);
 };

@@ -16,6 +16,8 @@ void RequestSender::handleInput(){
 
         }else if(request=="msg"){
             constructMessageRequest();
+        }else if(request=="Login"){
+            constructLoginRequest();
         }else{
             //uppon no match default message
             constructUnkownRequest();
@@ -51,10 +53,33 @@ void RequestSender::constructMessageRequest(){
     sendChunk(clientSocket,serializedData);
 };
 
+void RequestSender::constructLoginRequest(){
+    char username[MAX_CREDENTIALS_LENGTH];
+    char password[MAX_CREDENTIALS_LENGTH];
+
+    std::cout << "New username(" << MAX_CREDENTIALS_LENGTH << "  characters at most): " ;
+    std::cin >> username;
+
+    std::cout << "Enter your password" << MAX_CREDENTIALS_LENGTH << " characters at most): " ;
+    std::cin >> password;
+
+    request loginRequest(COMMUNICATION,LOGIN,{username,password},{});
+    vector<uint8_t> serializedData=loginRequest.serialize();
+
+    sendChunk(clientSocket,serializedData);
+
+    //return feedback from server
+    request serverFeedbackRequest;
+    vector<uint8_t> serverFeedbackByteStream;
+    receiveChunks(clientSocket,serverFeedbackByteStream);
+    serverFeedbackRequest.deserialize(serverFeedbackByteStream);
+    std::cout << serverFeedbackRequest.getTextArgs()[0];
+};
 //requesthandler for server
-RequestHandler::RequestHandler(int clientSocket_,DataBase* DBptr){
+RequestHandler::RequestHandler(int clientSocket_,DataBase* DBptr,std::mutex* mutex){
     clientSocket =  clientSocket_;
     db = db;
+    mtx = mutex;
 };
 
 void RequestHandler::handleInput(){
@@ -63,8 +88,7 @@ void RequestHandler::handleInput(){
         receiveChunks(clientSocket,serializedRequest);
         request requestReceived;
         requestReceived.deserialize(serializedRequest);
-        //decide which action to perform according to the data
-        //quick implementation
+
         switch(requestReceived.getMessageCommand()){
             case END_STREAM:
                 endConnection();
@@ -73,6 +97,7 @@ void RequestHandler::handleInput(){
                 std::cout << requestReceived.getTextArgs()[0] << std::endl;
                 break;
             case LOGIN:
+                registerNewUser(requestReceived);
                 break;
             
         }
@@ -83,3 +108,25 @@ void RequestHandler::handleInput(){
 void RequestHandler::endConnection(){
     connectedToClient = false;
 }
+
+void RequestHandler::registerNewUser(request& registerRequest){
+    const char* username = registerRequest.getTextArgs()[0];
+    const char* password = registerRequest.getTextArgs()[1];
+    
+    mtx->lock();
+    int code =  db->registerUser(username,password);
+    mtx->unlock();
+
+    if(code==REGISTER_SUCCESS){
+        constructInfoRequest("User created successfully!");
+    }else{
+        constructInfoRequest("Please enter a different username User already exists");
+
+    }
+};
+
+
+void RequestHandler::constructInfoRequest(const char* msg){
+    request infoRequest(COMMUNICATION,MSG,{msg});
+    sendChunk(clientSocket,infoRequest.serialize());
+};
