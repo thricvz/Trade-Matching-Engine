@@ -6,8 +6,11 @@
 #include "requestClass.h"
 #include "ChunkTransmission.h"
 #include "byteCodes.h"
-#include "DataBase.hpp"
+#include "DataBaseCommunication.hpp"
 #include "DataBaseCommunicationCodes.hpp"
+
+
+
 
 using std::string;
 using std::map;
@@ -37,11 +40,12 @@ class RequestSender{
 //for the use of the server
 
 class RequestHandler{
-    std::mutex *mtx;
-    DataBase *db;
 
     int clientSocket;
+    int threadId;
     bool connectedToClient = true;
+    std::mutex * mtx;
+    DBCommunication * dbCommunication;
     //future lock variable that manages actions on the server with a lock for the threads
     vector<uint8_t> getSerializedRequest();
     //
@@ -51,7 +55,7 @@ class RequestHandler{
     //communication for the client
     void constructInfoRequest(const char* msg);
     public:
-        RequestHandler(int clientSocket_,DataBase* DBptr,std::mutex *mutex);
+        RequestHandler(int clientSocket_,DBCommunication* ptr,std::mutex* mtx);
         void handleInput();
 
 

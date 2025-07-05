@@ -9,22 +9,22 @@ const int32_t BYTE_EXTRACT = 0b11111111;
 request::request(){
     messageType = 0;
     messageCommand = 0;
-    textArgs = vector<char*>(0);
+    textArgs = vector<const char*>(0);
     numericArgs = vector<int32_t>(0);
 };
 request::request(uint8_t messageType_,uint8_t messageCommand_,vector<int32_t> args_){
     messageType = messageType_;
     messageCommand = messageCommand_;
-    textArgs = vector<char*>(0);
+    textArgs = vector<const char*>(0);
     numericArgs = args_;
 };
-request::request(uint8_t messageType_,uint8_t messageCommand_,vector<char*> args_){
+request::request(uint8_t messageType_,uint8_t messageCommand_,vector<const char*> args_){
     messageType = messageType_;
     messageCommand = messageCommand_;
     textArgs = args_;
     numericArgs = vector<int32_t>(0);
 };
-request::request(uint8_t messageType_,uint8_t messageCommand_,vector<char*> textargs_,vector<int32_t> numericargs_){
+request::request(uint8_t messageType_,uint8_t messageCommand_,vector<const char*> textargs_,vector<int32_t> numericargs_){
     messageType = messageType_;
     messageCommand = messageCommand_;
     textArgs = textargs_;
@@ -44,7 +44,7 @@ vector<uint8_t> request::serialize(){
     return encoded_data;
 };
 
-vector<char*> request::getTextArgs(){
+vector<const char*> request::getTextArgs(){
     return textArgs;
 };
 vector<int32_t> request::getNumericArgs(){
@@ -57,13 +57,13 @@ uint8_t request::getMessageType(){
     return messageType;
 };
 
-void request::serialize_args(vector<uint8_t> &stream,std::vector<char*> args_){
+void request::serialize_args(vector<uint8_t> &stream,std::vector<const char*> args_){
     stream.push_back(LIST);
     stream.push_back(STRING);
     stream.push_back(args_.size());
 
     for(int i =0;i<args_.size();i++){
-        char *currentString = args_[i];
+        const char *currentString = args_[i];
         int indexStringSize = stream.size();
         uint8_t stringSize = 0;
 

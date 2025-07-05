@@ -29,6 +29,7 @@ static int RetrieveUserAccountBalanceCallback(void *accountBalance, int count, c
 
 //Class Methods
 DataBase::DataBase(const char *PATH){
+    sqlite3_config(SQLITE_CONFIG_SERIALIZED);
     filePath= string(PATH);
     if(connect()!=CONNECT_SUCCESS)
         throw std::runtime_error("Cant  open database");

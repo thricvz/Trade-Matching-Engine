@@ -28,7 +28,7 @@ TEST(Serialization, TextArguments){
     char w1[] = "hahaha";
     char w2[] = "shein";
     char w3[] = "worldwide";
-    std::vector<char*> args = {w1,w2,w3};
+    std::vector<const char*> args = {w1,w2,w3};
 
     request requestToSerialize(msgCommand,msgType,args);
     request unchangedRequest(msgCommand,msgType,args);
@@ -52,7 +52,7 @@ TEST(Serialization, FullRequest){
     char w3[] = "woworrldwide";
     char w4[] = "ffldl";
 
-    std::vector<char*> args = {w1,w2,w3};
+    std::vector<const char*> args = {w1,w2,w3};
     std::vector<int32_t> numericArgs = {32,45,65};
 
     request requestToSerialize(msgCommand,msgType,args,numericArgs);

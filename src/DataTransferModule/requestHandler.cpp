@@ -1,6 +1,7 @@
 #include "requestHandler.hpp"
 #include <unistd.h>
 #include <stdio.h>
+#include "DataBaseCommunication.hpp"
 
 RequestSender::RequestSender(int clientSocket_){
     clientSocket =  clientSocket_;
@@ -16,7 +17,7 @@ void RequestSender::handleInput(){
 
         }else if(request=="msg"){
             constructMessageRequest();
-        }else if(request=="Login"){
+        }else if(request=="login"){
             constructLoginRequest();
         }else{
             //uppon no match default message
@@ -76,10 +77,11 @@ void RequestSender::constructLoginRequest(){
     std::cout << serverFeedbackRequest.getTextArgs()[0];
 };
 //requesthandler for server
-RequestHandler::RequestHandler(int clientSocket_,DataBase* DBptr,std::mutex* mutex){
+RequestHandler::RequestHandler(int clientSocket_,DBCommunication *ptr,std::mutex* mtx_){
     clientSocket =  clientSocket_;
-    db = db;
-    mtx = mutex;
+    threadId =clientSocket;
+    dbCommunication = ptr;
+    mtx= mtx_;
 };
 
 void RequestHandler::handleInput(){
@@ -112,10 +114,14 @@ void RequestHandler::endConnection(){
 void RequestHandler::registerNewUser(request& registerRequest){
     const char* username = registerRequest.getTextArgs()[0];
     const char* password = registerRequest.getTextArgs()[1];
-    
-    mtx->lock();
-    int code =  db->registerUser(username,password);
-    mtx->unlock();
+    //replace with our new structure
+    DBrequest newUser{threadId,200,{username,password},{}};
+    std::mutex mtx;
+    mtx.lock();
+    dbCommunication->addNewRequest(newUser);
+    mtx.unlock();
+    DBresponse requestResponse = dbCommunication->waitResponse(threadId);
+    int code = requestResponse.errorCode;
 
     if(code==REGISTER_SUCCESS){
         constructInfoRequest("User created successfully!");
