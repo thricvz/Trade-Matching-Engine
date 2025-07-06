@@ -12,25 +12,40 @@
 #include "requestHandler.hpp" 
 #include "DataBase.hpp"
 #include "DataBaseCommunication.hpp"
+#include "DBCommunicationModuleCodes.hpp"
 
 const int MAX_CONNECTIONS=3;
 //something for handling the messages 
 DBCommunication DataBaseCommunicationHandler;
 std::mutex mtx;
 
+void handleRegistration(DataBase& db,DBCommunication &dbCommunication, DBrequest&request){
+    int code = db.registerUser(request.textArgs[0],request.textArgs[1]);
+    DBresponse response{{},{},code};
+    mtx.lock();
+    dbCommunication.addResponse(request.threadId,response);
+    mtx.unlock();
+}
+
+
+void handleLogin(DataBase& db,DBCommunication &dbCommunication, DBrequest&request){
+    int userId= db.getUserId(request.textArgs[0],request.textArgs[1]);
+    DBresponse response{{},{userId},userId};
+    mtx.lock();
+    dbCommunication.addResponse(request.threadId,response);
+    mtx.unlock();
+}
 void dbThread(DBCommunication& dbCommunication ){
     DataBase db("DATABASE.db");
     while(true){
         mtx.lock();
         DBrequest request =  dbCommunication.getRequest();
         mtx.unlock();
-        if(request.requestType == 200){
-            int code = db.registerUser(request.textArgs[0],request.textArgs[0]);
-            DBresponse response{{},{},code};
-            mtx.lock();
-            dbCommunication.addResponse(request.threadId,response);
-            mtx.unlock();
-            
+        switch(request.requestType){
+            case DB_REGISTER:
+                handleRegistration(db,dbCommunication,request);
+            case DB_LOGIN:
+                handleLogin(db,dbCommunication,request);
         }
     }
 }
@@ -58,7 +73,7 @@ int main(){
     std::vector<std::thread> concurrentConnections(0);
 
 
-    //start Db thread
+    //start DataBase thread
     std::thread DB = std::thread(dbThread,std::ref(DataBaseCommunicationHandler));
     DB.detach();
     while(true){

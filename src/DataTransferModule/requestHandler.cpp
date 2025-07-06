@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include "DataBaseCommunication.hpp"
+#include "DBCommunicationModuleCodes.hpp"
 
 RequestSender::RequestSender(int clientSocket_){
     clientSocket =  clientSocket_;
@@ -19,6 +20,9 @@ void RequestSender::handleInput(){
             constructMessageRequest();
         }else if(request=="login"){
             constructLoginRequest();
+
+        }else if(request=="register"){
+            constructRegisterRequest();
         }else{
             //uppon no match default message
             constructUnkownRequest();
@@ -74,8 +78,37 @@ void RequestSender::constructLoginRequest(){
     vector<uint8_t> serverFeedbackByteStream;
     receiveChunks(clientSocket,serverFeedbackByteStream);
     serverFeedbackRequest.deserialize(serverFeedbackByteStream);
+    
+    if(serverFeedbackRequest.getMessageCommand()==LOGIN){
+        clientID = serverFeedbackRequest.getNumericArgs()[0];
+        return;
+    }
     std::cout << serverFeedbackRequest.getTextArgs()[0];
 };
+
+void RequestSender::constructRegisterRequest(){
+    char username[MAX_CREDENTIALS_LENGTH];
+    char password[MAX_CREDENTIALS_LENGTH];
+
+    std::cout << "New username(" << MAX_CREDENTIALS_LENGTH << "  characters at most): " ;
+    std::cin >> username;
+
+    std::cout << "Enter your password" << MAX_CREDENTIALS_LENGTH << " characters at most): " ;
+    std::cin >> password;
+
+    request loginRequest(COMMUNICATION,REGISTER,{username,password},{});
+    vector<uint8_t> serializedData=loginRequest.serialize();
+
+    sendChunk(clientSocket,serializedData);
+
+    //return feedback from server
+    request serverFeedbackRequest;
+    vector<uint8_t> serverFeedbackByteStream;
+    receiveChunks(clientSocket,serverFeedbackByteStream);
+    serverFeedbackRequest.deserialize(serverFeedbackByteStream);
+    std::cout << serverFeedbackRequest.getTextArgs()[0];
+    
+}
 //requesthandler for server
 RequestHandler::RequestHandler(int clientSocket_,DBCommunication *ptr,std::mutex* mtx_){
     clientSocket =  clientSocket_;
@@ -98,9 +131,13 @@ void RequestHandler::handleInput(){
             case MSG:
                 std::cout << requestReceived.getTextArgs()[0] << std::endl;
                 break;
-            case LOGIN:
+            case REGISTER:
                 registerNewUser(requestReceived);
                 break;
+            case LOGIN:
+                loginUser(requestReceived);
+                break;
+
             
         }
         serializedRequest.clear();
@@ -115,7 +152,7 @@ void RequestHandler::registerNewUser(request& registerRequest){
     const char* username = registerRequest.getTextArgs()[0];
     const char* password = registerRequest.getTextArgs()[1];
     //replace with our new structure
-    DBrequest newUser{threadId,200,{username,password},{}};
+    DBrequest newUser{threadId,DB_REGISTER,{username,password},{}};
     std::mutex mtx;
     mtx.lock();
     dbCommunication->addNewRequest(newUser);
@@ -131,8 +168,38 @@ void RequestHandler::registerNewUser(request& registerRequest){
     }
 };
 
+void RequestHandler::loginUser(request &loginRequest){
+    const char* username = loginRequest.getTextArgs()[0];
+    const char* password = loginRequest.getTextArgs()[1];
+    //replace with our new structure
+    DBrequest loginUser{threadId,DB_LOGIN,{username,password},{}};
+    std::mutex mtx;
+    mtx.lock();
+    dbCommunication->addNewRequest(loginUser);
+    mtx.unlock();
+
+    mtx.lock();
+    DBresponse requestResponse = dbCommunication->waitResponse(threadId);
+    mtx.unlock();
+
+    int code = requestResponse.errorCode;
+
+    if(code!=USER_NOT_FOUND){
+        int userId = requestResponse.numericArgs[0];
+        constructIdRequest(userId);
+    }else{
+        constructInfoRequest("User not found: please re-enter password");
+
+    }
+}
 
 void RequestHandler::constructInfoRequest(const char* msg){
     request infoRequest(COMMUNICATION,MSG,{msg});
+    sendChunk(clientSocket,infoRequest.serialize());
+};
+
+
+void  RequestHandler::constructIdRequest(int id){
+    request infoRequest(COMMUNICATION,LOGIN,{},{id});
     sendChunk(clientSocket,infoRequest.serialize());
 };

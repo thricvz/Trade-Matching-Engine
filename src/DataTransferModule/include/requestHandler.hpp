@@ -22,27 +22,29 @@ struct DATABASE{
 //meant for the client side
 class RequestSender{
     bool exitDemanded=false;
-    int clientSocket;
+    int clientSocket{};
+    int clientID{-1};
     private:
         //methods for cunstructing the different types of requests
         void constructExitRequest();
         void constructUnkownRequest();
         void constructMessageRequest();
         void constructLoginRequest();
-    public: 
+        void constructRegisterRequest();
+        public: 
         RequestSender(int clientSocket_);
         
         //methods for cunstructing the different types of requests
         void handleInput();   
-};
-
-
-//for the use of the server
-
-class RequestHandler{
-
-    int clientSocket;
-    int threadId;
+    };
+    
+    
+    //for the use of the server
+    
+    class RequestHandler{
+        
+        int clientSocket;
+        int threadId;
     bool connectedToClient = true;
     std::mutex * mtx;
     DBCommunication * dbCommunication;
@@ -51,11 +53,13 @@ class RequestHandler{
     //
     void endConnection();
     void registerNewUser(request& registerRequest);
-
+    void loginUser(request& loginRequest);
+    
     //communication for the client
     void constructInfoRequest(const char* msg);
+    void constructIdRequest(int id);
     public:
-        RequestHandler(int clientSocket_,DBCommunication* ptr,std::mutex* mtx);
+    RequestHandler(int clientSocket_,DBCommunication* ptr,std::mutex* mtx);
         void handleInput();
 
 
