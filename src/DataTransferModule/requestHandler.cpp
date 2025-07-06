@@ -126,7 +126,7 @@ void RequestSender::constructBalanceRequest(){
     int dollars =  serverFeedbackRequest.getNumericArgs()[0];
     int cents =  serverFeedbackRequest.getNumericArgs()[1];
 
-    std::cout << "you have " << dollars<< " dollars and " << cents << "in your account" << std::endl;
+    std::cout << "you have " << dollars<< " dollars and " << cents << " cents in your account" << std::endl;
 }
 //requesthandler for server
 RequestHandler::RequestHandler(int clientSocket_,DBCommunication *ptr,std::mutex* mtx_){
