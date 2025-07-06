@@ -11,7 +11,7 @@ const uint8_t END_STREAM = 0x95;
 const uint8_t MSG = 0x94;
 const uint8_t LOGIN =0X93;
 const uint8_t REGISTER = 0x89;
-
+const uint8_t BALANCE =0x66;
 //DATA TYPES
 const uint8_t INTEGER = 0x92;
 const uint8_t STRING = 0x91;

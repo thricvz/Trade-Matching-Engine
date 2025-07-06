@@ -29,12 +29,24 @@ void handleRegistration(DataBase& db,DBCommunication &dbCommunication, DBrequest
 
 
 void handleLogin(DataBase& db,DBCommunication &dbCommunication, DBrequest&request){
+
     int userId= db.getUserId(request.textArgs[0],request.textArgs[1]);
     DBresponse response{{},{userId},userId};
     mtx.lock();
     dbCommunication.addResponse(request.threadId,response);
     mtx.unlock();
 }
+
+void handleRetrieveBalanceData(DataBase& db,DBCommunication &dbCommunication, DBrequest&request){
+    int userId= request.numericArgs[0];
+    std::pair<int,int> userBalance= db.getUserBalance(userId);
+
+    DBresponse response{{},{userBalance.first,userBalance.second}};
+    mtx.lock();
+    dbCommunication.addResponse(request.threadId,response);
+    mtx.unlock();
+};
+
 void dbThread(DBCommunication& dbCommunication ){
     DataBase db("DATABASE.db");
     while(true){
@@ -44,8 +56,13 @@ void dbThread(DBCommunication& dbCommunication ){
         switch(request.requestType){
             case DB_REGISTER:
                 handleRegistration(db,dbCommunication,request);
+                break;
             case DB_LOGIN:
                 handleLogin(db,dbCommunication,request);
+                break;
+            case DB_RETRIEVE_USER_BALANCE:
+                handleRetrieveBalanceData(db,dbCommunication,request);
+                break;
         }
     }
 }

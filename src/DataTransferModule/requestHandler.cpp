@@ -23,6 +23,8 @@ void RequestSender::handleInput(){
 
         }else if(request=="register"){
             constructRegisterRequest();
+        }else if(request=="balance"){
+            constructBalanceRequest();
         }else{
             //uppon no match default message
             constructUnkownRequest();
@@ -81,6 +83,7 @@ void RequestSender::constructLoginRequest(){
     
     if(serverFeedbackRequest.getMessageCommand()==LOGIN){
         clientID = serverFeedbackRequest.getNumericArgs()[0];
+        std::cout << clientID;
         return;
     }
     std::cout << serverFeedbackRequest.getTextArgs()[0];
@@ -108,6 +111,22 @@ void RequestSender::constructRegisterRequest(){
     serverFeedbackRequest.deserialize(serverFeedbackByteStream);
     std::cout << serverFeedbackRequest.getTextArgs()[0];
     
+}
+
+void RequestSender::constructBalanceRequest(){
+    request getBalanceRequest(COMMUNICATION,BALANCE,{},{clientID});
+    vector<uint8_t> serializedData=getBalanceRequest.serialize();
+    sendChunk(clientSocket,serializedData);
+
+
+    request serverFeedbackRequest;
+    vector<uint8_t> serverFeedbackByteStream;
+    receiveChunks(clientSocket,serverFeedbackByteStream);
+    serverFeedbackRequest.deserialize(serverFeedbackByteStream);
+    int dollars =  serverFeedbackRequest.getNumericArgs()[0];
+    int cents =  serverFeedbackRequest.getNumericArgs()[1];
+
+    std::cout << "you have " << dollars<< " dollars and " << cents << "in your account" << std::endl;
 }
 //requesthandler for server
 RequestHandler::RequestHandler(int clientSocket_,DBCommunication *ptr,std::mutex* mtx_){
@@ -137,8 +156,9 @@ void RequestHandler::handleInput(){
             case LOGIN:
                 loginUser(requestReceived);
                 break;
-
-            
+            case BALANCE:
+                getBalanceUser(requestReceived);
+                break;
         }
         serializedRequest.clear();
     }
@@ -202,4 +222,33 @@ void RequestHandler::constructInfoRequest(const char* msg){
 void  RequestHandler::constructIdRequest(int id){
     request infoRequest(COMMUNICATION,LOGIN,{},{id});
     sendChunk(clientSocket,infoRequest.serialize());
+};
+
+
+void RequestHandler::constructBalanceRequest(int dollars,int cents){
+    request infoRequest(COMMUNICATION,BALANCE,{},{dollars,cents});
+    sendChunk(clientSocket,infoRequest.serialize());
+};
+
+void RequestHandler::getBalanceUser(request& request){
+    int userId  = request.getNumericArgs()[0];
+    if(userId==UNVALID_ID){
+        constructInfoRequest("Fucking wrong id mate");
+        return;
+
+    }
+    DBrequest getBalance{threadId,DB_RETRIEVE_USER_BALANCE,{},{userId}};
+    std::mutex mtx;
+    mtx.lock();
+    dbCommunication->addNewRequest(getBalance);
+    mtx.unlock();
+
+    mtx.lock();
+    DBresponse requestResponse = dbCommunication->waitResponse(threadId);
+    mtx.unlock();
+
+    int BalanceDollars= requestResponse.numericArgs[0];
+    int BalanceCents = requestResponse.numericArgs[1];
+
+    constructBalanceRequest(BalanceDollars,BalanceCents);
 };
