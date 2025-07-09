@@ -29,6 +29,7 @@ class RequestSender{
         void constructLoginRequest();
         void constructRegisterRequest();
         void constructBalanceRequest();
+        void constructNewOrderRequest();
         public: 
         RequestSender(int clientSocket_);
         
@@ -40,25 +41,28 @@ class RequestSender{
     //for the use of the server
     
     class RequestHandler{
-        
-        int clientSocket;
-        int threadId;
-        bool connectedToClient = true;
-        std::mutex * mtx;
-        DBCommunication * dbCommunication;
-
-        vector<uint8_t> getSerializedRequest();
-        void endConnection();
-        void registerNewUser(request& registerRequest);
-        void loginUser(request& loginRequest);
-        void getBalanceUser(request& balanceCheckUp);
-        //communication for the client
-        void constructInfoRequest(const char* msg);
-        void constructIdRequest(int id);
-        void constructBalanceRequest(int dollars,int cents);
         public:
         RequestHandler(int clientSocket_,DBCommunication* ptr,std::mutex* mtx);
-            void handleInput();
+        void handleInput();
+        
+        private:
+            int clientSocket;
+            int threadId;
+            bool connectedToClient = true;
+            std::mutex * mtx;
+            DBCommunication * dbCommunication;
+            
+            vector<uint8_t> getSerializedRequest();
+            
+            void endConnection();
+            void registerNewUser(request& registerRequest);
+            void constructBalanceRequest(int dollars,int cents);
+            void loginUser(request& loginRequest);
+            void getBalanceUser(request& balanceCheckUp);
+            void createNewOrder(request& request);
+            //communication for the client
+            void constructInfoRequest(const char* msg);
+            void constructIdRequest(int id);
 
 
 };

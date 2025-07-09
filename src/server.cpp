@@ -13,6 +13,7 @@
 #include "DataBase.hpp"
 #include "DataBaseCommunication.hpp"
 #include "DBCommunicationModuleCodes.hpp"
+#include "orderbook.h"
 
 const int MAX_CONNECTIONS=3;
 //something for handling the messages 
@@ -47,21 +48,48 @@ void handleRetrieveBalanceData(DataBase& db,DBCommunication &dbCommunication, DB
     mtx.unlock();
 };
 
+void handleNewOrder(OrderBook& orderbook,DBCommunication &dbCommunication, DBrequest&request){
+    OrderType type = static_cast<OrderType>(request.numericArgs[0]);
+    OrderSide side = static_cast<OrderSide>(request.numericArgs[1]);
+    int quantity =  request.numericArgs[2];
+    int dollars = request.numericArgs[3];
+    int cents = request.numericArgs[4];
+
+    Order *newOrder =new  Order(type,side,quantity,dollars,cents);
+    std::pair<MatchesList,OrderFillState> matchResult = orderbook.addOrder(newOrder);
+
+    //send notifications for each user which order has been matched
+
+    std::cout << "currently handling a order";
+
+
+}
 void dbThread(DBCommunication& dbCommunication ){
     DataBase db("DATABASE.db");
+    Fifo algorithm;
+    OrderBook orderbook(&algorithm);
+
     while(true){
         mtx.lock();
-        DBrequest request =  dbCommunication.getRequest();
+        std::optional<DBrequest> request =  dbCommunication.getRequest();
         mtx.unlock();
-        switch(request.requestType){
+        //if no request repeat process
+        if(!request.has_value()){
+            continue;
+        }
+
+        switch(request.value().requestType){
             case DB_REGISTER:
-                handleRegistration(db,dbCommunication,request);
+                handleRegistration(db,dbCommunication,request.value());
                 break;
             case DB_LOGIN:
-                handleLogin(db,dbCommunication,request);
+                handleLogin(db,dbCommunication,request.value());
                 break;
             case DB_RETRIEVE_USER_BALANCE:
-                handleRetrieveBalanceData(db,dbCommunication,request);
+                handleRetrieveBalanceData(db,dbCommunication,request.value());
+                break;
+            case OB_NEW_ORDER:
+                handleNewOrder(orderbook,dbCommunication,request.value());
                 break;
         }
     }

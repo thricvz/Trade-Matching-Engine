@@ -4,7 +4,7 @@
 #include <list>
 #include <vector>
 #include <string>
-
+#include<optional>
 using std::map;
 using std::stack;
 using std::list;
@@ -34,5 +34,5 @@ class DBCommunication{
         DBresponse waitResponse(int threadId);
 
         void addResponse(int threadId,DBresponse operationResult);
-        DBrequest getRequest();
+        std::optional<DBrequest> getRequest();
 };

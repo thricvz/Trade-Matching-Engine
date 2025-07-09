@@ -26,11 +26,11 @@ void DBCommunication::addResponse(int threadId,DBresponse operationResult){
     return;
 };
 
-DBrequest DBCommunication::getRequest(){
-    while(requestsThreads.size()==0){
-        //wait
+std::optional<DBrequest> DBCommunication::getRequest(){
+    if(requestsThreads.size()==0){
+        return std::optional<DBrequest>(std::nullopt);
     }
     DBrequest request = requestsThreads.front();
     requestsThreads.pop_front();
-    return request;
+    return std::optional<DBrequest>(request);
 }

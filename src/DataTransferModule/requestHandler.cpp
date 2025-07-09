@@ -3,7 +3,8 @@
 #include <stdio.h>
 #include "DataBaseCommunication.hpp"
 #include "DBCommunicationModuleCodes.hpp"
-
+#include "orderTypes.h"
+#include <optional> 
 RequestSender::RequestSender(int clientSocket_){
     clientSocket =  clientSocket_;
 };
@@ -25,6 +26,8 @@ void RequestSender::handleInput(){
             constructRegisterRequest();
         }else if(request=="balance"){
             constructBalanceRequest();
+        }else if(request=="order"){
+            constructNewOrderRequest();
         }else{
             //uppon no match default message
             constructUnkownRequest();
@@ -40,6 +43,76 @@ void RequestSender::constructExitRequest(){
 
     sendChunk(clientSocket,serializedData);
 }
+
+std::optional<OrderType> getOrderType(std::string_view string){
+    if(string=="market"){
+        return std::optional<OrderType>(OrderType::MARKET);
+
+    }else if(string=="limit"){
+        return std::optional<OrderType>(OrderType::LIMIT);
+    }
+    return std::optional<OrderType>(std::nullopt);
+
+}
+
+
+std::optional<OrderSide> getOrderSide(std::string_view string){
+    if(string=="buy"){
+        return std::optional<OrderSide>(OrderSide::BUY);
+
+    }else if(string=="sell"){
+        return std::optional<OrderSide>(OrderSide::SELL);
+    }
+    return std::optional<OrderSide>(std::nullopt);
+
+}
+void RequestSender::constructNewOrderRequest(){
+    std::string userInput{};
+    std::cout << "Enter order type( limit or market ):";
+    std::cin >> userInput;
+    std::optional<OrderType> orderType {getOrderType(userInput)};
+    if(!orderType.has_value()){
+        std::cout <<"Ordertype not found please provide a valid ordertype";
+        return;
+    }
+    //order price
+    int dollars{};
+    int cents{};
+    if(orderType.value()==OrderType::MARKET){
+        std::cout << "Enter the desired price in dollars";
+        std::cin >> userInput;   
+        dollars = stoi(userInput);
+
+        std::cout << "Enter the desired price in cents";
+        std::cin >> userInput;   
+        cents = stoi(userInput);
+
+        if(dollars <=0 || cents <= 0){
+            std::cout << "Please enter a valid price";
+            return;
+        }
+    }
+    std::cout << "Enter order side (buy or sell) :";
+    std::cin >> userInput;
+    std::optional<OrderSide> orderSide {getOrderSide(userInput)};
+    if(!orderType.has_value()){
+        std::cout <<" not found please provide a valid order side";
+        return;
+    }
+
+    std::cout << "Enter the quanity : ";
+    std::cin >> userInput;
+    int quantity{stoi(userInput)};
+    if(quantity<=0){
+        std::cout << "Please enter a valid quantity";
+        return;
+    }
+
+    request newOrderRequest(ORDERBOOK_NEW_ORDER,ORDERBOOK_NEW_ORDER,{},{orderType.value(),orderSide.value(),quantity,dollars,cents});
+    vector<uint8_t> serializedData=newOrderRequest.serialize();
+
+    sendChunk(clientSocket,serializedData);
+};
 
 void RequestSender::constructUnkownRequest(){
     std::cout << "UNKNOWN COMMAND\n";
@@ -136,6 +209,20 @@ RequestHandler::RequestHandler(int clientSocket_,DBCommunication *ptr,std::mutex
     mtx= mtx_;
 };
 
+void RequestHandler::createNewOrder(request& request){
+    int type = request.getNumericArgs()[0];
+    int  side = request.getNumericArgs()[1];
+    int quantity =  request.getNumericArgs()[2];
+    int dollars = request.getNumericArgs()[3];
+    int cents = request.getNumericArgs()[4];
+
+    
+    DBrequest newOrderRequest{threadId,OB_NEW_ORDER,{},{type,side,quantity,dollars,cents}};
+    mtx->lock();
+    dbCommunication->addNewRequest(newOrderRequest);
+    mtx->unlock();
+};
+
 void RequestHandler::handleInput(){
     vector<uint8_t> serializedRequest;
     while(connectedToClient){
@@ -158,6 +245,9 @@ void RequestHandler::handleInput(){
                 break;
             case BALANCE:
                 getBalanceUser(requestReceived);
+                break;
+            case ORDERBOOK_NEW_ORDER:
+                createNewOrder(requestReceived);
                 break;
         }
         serializedRequest.clear();

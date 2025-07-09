@@ -11,14 +11,15 @@ include_directories(include)
 include_directories(DataBase/include)
 include_directories(DataBaseCommunication/include)
 include_directories(DataTransferModule/include)
-
+include_directories(OrderBook/include)
 
 add_subdirectory(DataBase)
 add_subdirectory(DataBaseCommunication)
 add_subdirectory(DataTransferModule)
+add_subdirectory(OrderBook)
 
 add_executable(server server.cpp)
 add_executable(client client.cpp)
 
-target_link_libraries(server DataTransmissionModule DataBaseModule DataBaseCommunicationModule)
+target_link_libraries(server DataTransmissionModule DataBaseModule DataBaseCommunicationModule orderbookModule)
 target_link_libraries(client DataTransmissionModule DataBaseModule)
