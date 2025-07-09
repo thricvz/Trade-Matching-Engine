@@ -48,17 +48,19 @@ void handleRetrieveBalanceData(DataBase& db,DBCommunication &dbCommunication, DB
     mtx.unlock();
 };
 
-void handleNewOrder(OrderBook& orderbook,DBCommunication &dbCommunication, DBrequest&request){
-    OrderType type = static_cast<OrderType>(request.numericArgs[0]);
-    OrderSide side = static_cast<OrderSide>(request.numericArgs[1]);
-    int quantity =  request.numericArgs[2];
-    int dollars = request.numericArgs[3];
-    int cents = request.numericArgs[4];
+
+void handleNewOrder(OrderBook& orderbook,DataBase& db,DBCommunication &dbCommunication, DBrequest&request){
+    int clientID = request.numericArgs[0];
+    OrderType type = static_cast<OrderType>(request.numericArgs[1]);
+    OrderSide side = static_cast<OrderSide>(request.numericArgs[2]);
+    int quantity =  request.numericArgs[3];
+    int dollars = request.numericArgs[4];
+    int cents = request.numericArgs[5];
 
     Order *newOrder =new  Order(type,side,quantity,dollars,cents);
+    newOrder->setId(clientID);
     std::pair<MatchesList,OrderFillState> matchResult = orderbook.addOrder(newOrder);
 
-    //send notifications for each user which order has been matched
 
     std::cout << "currently handling a order";
 
@@ -89,7 +91,7 @@ void dbThread(DBCommunication& dbCommunication ){
                 handleRetrieveBalanceData(db,dbCommunication,request.value());
                 break;
             case OB_NEW_ORDER:
-                handleNewOrder(orderbook,dbCommunication,request.value());
+                handleNewOrder(orderbook,db,dbCommunication,request.value());
                 break;
         }
     }
@@ -100,7 +102,7 @@ void handleConnection(int clientSocket,DBCommunication & dbCommunication){
     
     RequestHandler requestHandler(clientSocket,&dbCommunication,&mtx);
     requestHandler.handleInput();
-    shutdown(clientSocket,2);
+    shutdown(clientSocket,SHUT_RD);
 };
 
 int main(){

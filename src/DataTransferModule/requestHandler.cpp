@@ -68,11 +68,18 @@ std::optional<OrderSide> getOrderSide(std::string_view string){
 }
 void RequestSender::constructNewOrderRequest(){
     std::string userInput{};
+    
+    if(clientID == UNVALID_ID){
+        std::cout <<"please login first before putting an order" << std::endl;
+        return ;
+    }
+    
     std::cout << "Enter order type( limit or market ):";
     std::cin >> userInput;
     std::optional<OrderType> orderType {getOrderType(userInput)};
+    
     if(!orderType.has_value()){
-        std::cout <<"Ordertype not found please provide a valid ordertype";
+        std::cout <<"Ordertype not found please provide a valid ordertype" << std::endl;
         return;
     }
     //order price
@@ -108,7 +115,7 @@ void RequestSender::constructNewOrderRequest(){
         return;
     }
 
-    request newOrderRequest(ORDERBOOK_NEW_ORDER,ORDERBOOK_NEW_ORDER,{},{orderType.value(),orderSide.value(),quantity,dollars,cents});
+    request newOrderRequest(ORDERBOOK_NEW_ORDER,ORDERBOOK_NEW_ORDER,{},{clientID, orderType.value(),orderSide.value(),quantity,dollars,cents});
     vector<uint8_t> serializedData=newOrderRequest.serialize();
 
     sendChunk(clientSocket,serializedData);
@@ -210,14 +217,15 @@ RequestHandler::RequestHandler(int clientSocket_,DBCommunication *ptr,std::mutex
 };
 
 void RequestHandler::createNewOrder(request& request){
-    int type = request.getNumericArgs()[0];
-    int  side = request.getNumericArgs()[1];
-    int quantity =  request.getNumericArgs()[2];
-    int dollars = request.getNumericArgs()[3];
-    int cents = request.getNumericArgs()[4];
+    int clientID = request.getNumericArgs()[0];
+    int type = request.getNumericArgs()[1];
+    int  side = request.getNumericArgs()[2];
+    int quantity =  request.getNumericArgs()[3];
+    int dollars = request.getNumericArgs()[4];
+    int cents = request.getNumericArgs()[5];
 
     
-    DBrequest newOrderRequest{threadId,OB_NEW_ORDER,{},{type,side,quantity,dollars,cents}};
+    DBrequest newOrderRequest{threadId,OB_NEW_ORDER,{},{clientID,side,quantity,dollars,cents}};
     mtx->lock();
     dbCommunication->addNewRequest(newOrderRequest);
     mtx->unlock();
@@ -226,6 +234,8 @@ void RequestHandler::createNewOrder(request& request){
 void RequestHandler::handleInput(){
     vector<uint8_t> serializedRequest;
     while(connectedToClient){
+        
+
         receiveChunks(clientSocket,serializedRequest);
         request requestReceived;
         requestReceived.deserialize(serializedRequest);
