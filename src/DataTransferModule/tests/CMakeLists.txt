@@ -8,5 +8,9 @@ find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
 
 
-add_executable(DataTransmissionModuleTESTS tests.cpp)
-target_link_libraries(DataTransmissionModuleTESTS GTest::gtest_main DataTransmissionModule)
+
+if(ENABLE_TESTS)
+    add_executable(DataTransmissionModuleTESTS tests.cpp)
+    target_link_libraries(DataTransmissionModuleTESTS GTest::gtest_main DataTransmissionModule)
+    add_test(NAME DataTranmissionModuleTests COMMAND $<TARGET_FILE:DataTransmissionModuleTESTS>)
+endif()
