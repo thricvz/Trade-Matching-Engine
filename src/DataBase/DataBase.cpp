@@ -1,7 +1,12 @@
 #include "DataBase.hpp"
 #include <fstream>
 #include <iostream>
+#include <filesystem>
 
+
+
+//needs to be changed
+#define DIR_PATH "/home/eric/Projects/Server/"
 
 //Callback Functions
 static int UserFoundCallback(void *returnVal, int count, char **data, char **columns)
@@ -27,6 +32,13 @@ static int RetrieveUserAccountBalanceCallback(void *accountBalance, int count, c
     return 0;
 }
 
+
+static int RetrieveUserStockHoldingsCallback(void *stockAmount, int count, char **data, char **columns){
+    int *resultPtr = static_cast<int*>(stockAmount);
+    //int the script we first have dollars
+    *resultPtr = atoi(data[0]);
+    return 0;
+} 
 //Class Methods
 DataBase::DataBase(const char *PATH){
     sqlite3_config(SQLITE_CONFIG_SERIALIZED);
@@ -74,7 +86,7 @@ int DataBase::registerUser(string username, string password){
 };
 
 void DataBase::loadScript(string scriptName,string &requestBuffer){
-    scriptName = "/home/eric/Projects/Server/src/DataBase/SqlRequests/" + scriptName;
+    scriptName = std::string(DIR_PATH) + "/src/DataBase/SqlRequests/" + scriptName;
     std::ifstream script(scriptName.c_str());
     string line;
 
@@ -84,10 +96,9 @@ void DataBase::loadScript(string scriptName,string &requestBuffer){
 };
 
 void DataBase::loadScript(string scriptName,string &requestBuffer, map<string,string> &tags){
-    scriptName = "/home/eric/Projects/Server/src/DataBase/SqlRequests/" + scriptName;
+    scriptName = std::string(DIR_PATH) + "/src/DataBase/SqlRequests/" + scriptName;
     std::ifstream script(scriptName.c_str());
     string line;
-
     
     while(getline(script,line)){
         replaceTagsInLine(line,tags);
@@ -137,6 +148,7 @@ std::pair<int,int> DataBase::getUserBalance(int userId){
 };
 
 
+
 void DataBase::setUserBalance(int userId,int dollars,int cents){
     map<string,string> tags = {
         {"@id",std::to_string(userId)},
@@ -147,3 +159,24 @@ void DataBase::setUserBalance(int userId,int dollars,int cents){
     loadScript("UpdateUserAccountBalance.txt",sqlRequest,tags);
     sqlite3_exec(db,sqlRequest.c_str(),NULL,nullptr,nullptr);   
 };
+
+
+void DataBase::setUserStockHolding(int userId,int newStockHolding){
+        
+    map<string,string> tags = {
+        {"@id",std::to_string(userId)},
+        {"@stocksAmount",std::to_string(newStockHolding)}
+    };
+    string sqlRequest;
+    loadScript("UpdateUserStocks.txt",sqlRequest,tags);
+    sqlite3_exec(db,sqlRequest.c_str(),NULL,nullptr,nullptr);   
+};
+
+int DataBase::getUserStockHolding(int userId){
+    map<string,string> tags = {{"@id",std::to_string(userId)}};
+    string sqlRequest;
+    int stockQuantity{ };
+    loadScript("RetrieveUserStocks.txt",sqlRequest,tags);
+    sqlite3_exec(db,sqlRequest.c_str(),RetrieveUserStockHoldingsCallback,&stockQuantity,nullptr);   
+    return stockQuantity;
+}; 

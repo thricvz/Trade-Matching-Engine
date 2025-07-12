@@ -3,7 +3,8 @@ CREATE TABLE Users (
   username VARCHAR(20),
   password VARCHAR(20),
   dollars INTEGER,
-  cents INTEGER
+  cents INTEGER,
+  stocks INTEGER
 );
 
 

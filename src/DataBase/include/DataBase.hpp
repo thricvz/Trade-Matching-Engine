@@ -24,14 +24,15 @@ class DataBase{
         DataBase(const char *PATH);
         ~DataBase();
 
-        //methods for managing login
         int registerUser(string username, string password);
         int getUserId(string username, string password);
 
-        //methods for data retrieving
         std::pair<int,int> getUserBalance(int userId);
         void setUserBalance(int userId,int dollars,int cents);
-
+        
+        
+        int getUserStockHolding(int userId); 
+        void setUserStockHolding(int userId,int newStockHolding); 
 
 
 };

@@ -3,6 +3,8 @@
 #include "DataBase.hpp"
 #include "DataBaseCommunicationCodes.hpp"
 //change the default argument for each platform
+
+
 void cleanup(const std::string& filename,std::string removeCommand="rm"){
     removeCommand +=" " + filename;
     std::system(removeCommand.c_str());
@@ -86,3 +88,22 @@ TEST(DataInteraction,setAccountBalance){
     EXPECT_EQ(db.getUserBalance(userId),expectedAccountBalance);
     cleanup("MyDataBase.db");
 }
+
+
+TEST(DataInteraction,UserStockHoldingInteraction){
+    cleanup("MyDataBase.db");
+    
+    DataBase db("MyDataBase.db");
+    db.registerUser("eric","mylittleponey");
+
+    int userId = db.getUserId("eric","mylittleponey");
+    int expectedStocksAmount =  150;
+    
+    db.setUserStockHolding(userId,expectedStocksAmount);
+     
+    
+    EXPECT_TRUE(db.getUserStockHolding(userId)==expectedStocksAmount);
+    cleanup("MyDataBase.db");
+}
+
+

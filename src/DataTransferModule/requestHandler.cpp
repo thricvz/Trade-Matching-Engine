@@ -66,6 +66,14 @@ std::optional<OrderSide> getOrderSide(std::string_view string){
     return std::optional<OrderSide>(std::nullopt);
 
 }
+
+void getOrderResultMessage(int clientSocket){
+    request serverFeedbackRequest;
+    vector<uint8_t> serverFeedbackByteStream;
+    receiveChunks(clientSocket,serverFeedbackByteStream);
+    serverFeedbackRequest.deserialize(serverFeedbackByteStream);
+    std::cout << serverFeedbackRequest.getTextArgs()[0];
+}
 void RequestSender::constructNewOrderRequest(){
     std::string userInput{};
     
@@ -85,7 +93,7 @@ void RequestSender::constructNewOrderRequest(){
     //order price
     int dollars{};
     int cents{};
-    if(orderType.value()==OrderType::MARKET){
+    if(orderType.value()==OrderType::LIMIT){
         std::cout << "Enter the desired price in dollars";
         std::cin >> userInput;   
         dollars = stoi(userInput);
@@ -119,6 +127,9 @@ void RequestSender::constructNewOrderRequest(){
     vector<uint8_t> serializedData=newOrderRequest.serialize();
 
     sendChunk(clientSocket,serializedData);
+
+
+    getOrderResultMessage(clientSocket);
 };
 
 void RequestSender::constructUnkownRequest(){
@@ -229,6 +240,10 @@ void RequestHandler::createNewOrder(request& request){
     mtx->lock();
     dbCommunication->addNewRequest(newOrderRequest);
     mtx->unlock();
+
+    
+    DBresponse response = dbCommunication->waitResponse(threadId);
+    constructInfoRequest(response.textArgs[0].c_str());
 };
 
 void RequestHandler::handleInput(){

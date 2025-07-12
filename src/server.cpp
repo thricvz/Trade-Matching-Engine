@@ -48,7 +48,29 @@ void handleRetrieveBalanceData(DataBase& db,DBCommunication &dbCommunication, DB
     mtx.unlock();
 };
 
+bool balanceSufficient(DataBase &db,Order *order,int userId){
+    std::pair<int,int> userBalance = db.getUserBalance(userId);
+    
+    if(order->side==OrderSide::BUY){
+        int balanceWorthCents = userBalance.first *100 + userBalance.second;
+        int orderWorthCents =  (order->price.dollars*100 + order->price.cents)*order->quantity;
+        
+        if(orderWorthCents > balanceWorthCents){
+            delete order;
+            return false;
+        }
 
+    }else if(order->side==OrderSide::SELL){
+        int userStockHolding = db.getUserStockHolding(userId);
+        if(userStockHolding > order->quantity){
+            delete order;
+            return false;
+        }
+    }
+
+    return true;
+
+}
 void handleNewOrder(OrderBook& orderbook,DataBase& db,DBCommunication &dbCommunication, DBrequest&request){
     int clientID = request.numericArgs[0];
     OrderType type = static_cast<OrderType>(request.numericArgs[1]);
@@ -58,11 +80,30 @@ void handleNewOrder(OrderBook& orderbook,DataBase& db,DBCommunication &dbCommuni
     int cents = request.numericArgs[5];
 
     Order *newOrder =new  Order(type,side,quantity,dollars,cents);
-    newOrder->setId(clientID);
-    std::pair<MatchesList,OrderFillState> matchResult = orderbook.addOrder(newOrder);
+    newOrder->setId(clientID); 
+
+    
+
+    if(balanceSufficient(db,newOrder,clientID)){
+        std::pair<MatchesList,OrderFillState> matchResult = orderbook.addOrder(newOrder);
+        std::cout << "currently handling a order";
+        
+        DBresponse serverResponse{{"order created successfully"},{},CONNECT_SUCCESS};
+
+        mtx.lock();
+        dbCommunication.addResponse(request.threadId,serverResponse);
+        mtx.unlock();
+
+    }else{
+        DBresponse serverResponse{{"Failed to put order: check your account balance"},{},CONNECT_SUCCESS};
+
+        mtx.lock();
+        dbCommunication.addResponse(request.threadId,serverResponse);
+        mtx.unlock();
+        
+    };
 
 
-    std::cout << "currently handling a order";
 
 
 }
