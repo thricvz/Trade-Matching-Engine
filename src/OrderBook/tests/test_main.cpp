@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
 #include "orderbook.h"
+#define DEFAULT_OWNERID 0
 
-bool equalVectorPtr(std::vector<int*> input,std::vector<int*> expected) {
+static bool equalVectorPtr(std::vector<int*> input,std::vector<int*> expected) {
   if (input.size() != expected.size()) {
     return false;
   }
@@ -144,7 +145,7 @@ TEST(FIFO,MATCH_AGAINST_SINGLE_ORDER) {
   //setting up variables for test
   MatchesList expected_matches_list;
   Price pricelevel_price(10,79);
-  OrderMatch expected_order_match(2,10,pricelevel_price,OrderFillState::FULL);
+  OrderMatch expected_order_match(DEFAULT_OWNERID,2,10,pricelevel_price,OrderFillState::FULL);
   PriceLevel *input_price_level=new PriceLevel(pricelevel_price);
 
   expected_matches_list.addMatch(expected_order_match);
@@ -171,9 +172,9 @@ TEST(FIFO,MATCH_AGAINST_MULTIPLE_SELL_ORDERS) {
 
   MatchesList expected_matches_list;
   Price pricelevel_price(10,79);
-  OrderMatch expected_order_match(2,10,pricelevel_price,OrderFillState::FULL);
-  OrderMatch expected_order_match2(3,5,pricelevel_price,OrderFillState::FULL);
-  OrderMatch expected_order_match3(4,5,pricelevel_price,OrderFillState::PARTIAL);
+  OrderMatch expected_order_match(DEFAULT_OWNERID,2,10,pricelevel_price,OrderFillState::FULL);
+  OrderMatch expected_order_match2(DEFAULT_OWNERID,3,5,pricelevel_price,OrderFillState::FULL);
+  OrderMatch expected_order_match3(DEFAULT_OWNERID,4,5,pricelevel_price,OrderFillState::PARTIAL);
 
   PriceLevel *input_price_level=new PriceLevel(pricelevel_price);
 
@@ -207,8 +208,8 @@ TEST(FIFO,MATCH_AGAINST_INVALID_SELL_LIMIT_ORDER) {
 
   MatchesList expected_matches_list;
   Price pricelevel_price(10,79);
-  OrderMatch expected_order_match(2,10,pricelevel_price,OrderFillState::FULL);
-  OrderMatch expected_order_match3(4,7,pricelevel_price,OrderFillState::FULL);
+  OrderMatch expected_order_match(DEFAULT_OWNERID,2,10,pricelevel_price,OrderFillState::FULL);
+  OrderMatch expected_order_match3(DEFAULT_OWNERID,4,7,pricelevel_price,OrderFillState::FULL);
 
   PriceLevel *input_price_level=new PriceLevel(pricelevel_price);
 
@@ -243,8 +244,8 @@ TEST(FIFO,MATCH_AGAINST_VALID_SELL_LIMIT_ORDER) {
 
   MatchesList expected_matches_list;
   Price pricelevel_price(5,79);
-  OrderMatch expected_order_match(2,10,pricelevel_price,OrderFillState::FULL);
-  OrderMatch expected_order_match2(3,3,pricelevel_price,OrderFillState::PARTIAL);
+  OrderMatch expected_order_match(DEFAULT_OWNERID,2,10,pricelevel_price,OrderFillState::FULL);
+  OrderMatch expected_order_match2(DEFAULT_OWNERID,3,3,pricelevel_price,OrderFillState::PARTIAL);
 
   PriceLevel *input_price_level=new PriceLevel(pricelevel_price);
 
@@ -279,8 +280,8 @@ TEST(FIFO, MATCH_AGAINST_MULTIPLE_BUY_ORDERS) {
   PriceLevel *input_price_level=new PriceLevel(pricelevel_price);
   MatchesList expected_matches_list;
 
-  OrderMatch match1(2,50,pricelevel_price,OrderFillState::FULL);
-  OrderMatch match2(3,75,pricelevel_price,OrderFillState::FULL);
+  OrderMatch match1(DEFAULT_OWNERID,2,50,pricelevel_price,OrderFillState::FULL);
+  OrderMatch match2(DEFAULT_OWNERID,3,75,pricelevel_price,OrderFillState::FULL);
 
   expected_matches_list.addMatch(match1);
   expected_matches_list.addMatch(match2);
@@ -311,8 +312,8 @@ TEST(Fifo,noMatchForSameUser){
   PriceLevel *input_price_level=new PriceLevel(pricelevel_price);
   MatchesList expected_matches_list;
 
-  OrderMatch match1(2,50,pricelevel_price,OrderFillState::FULL);
-  OrderMatch match2(3,75,pricelevel_price,OrderFillState::FULL);
+  OrderMatch match1(DEFAULT_OWNERID,2,50,pricelevel_price,OrderFillState::FULL);
+  OrderMatch match2(DEFAULT_OWNERID,3,75,pricelevel_price,OrderFillState::FULL);
 
   expected_matches_list.addMatch(match1);
   expected_matches_list.addMatch(match2);

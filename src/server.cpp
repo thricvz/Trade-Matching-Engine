@@ -62,7 +62,7 @@ bool balanceSufficient(DataBase &db,Order *order,int userId){
 
     }else if(order->side==OrderSide::SELL){
         int userStockHolding = db.getUserStockHolding(userId);
-        if(userStockHolding > order->quantity){
+        if(userStockHolding < order->quantity){
             delete order;
             return false;
         }
@@ -71,6 +71,81 @@ bool balanceSufficient(DataBase &db,Order *order,int userId){
     return true;
 
 }
+
+
+/*void updateAccountBalance(DataBase& db,){
+    if(order->side == OrderSide::SELL){
+        const std::pair<int,int> userBalance = db.getUserBalance(clientID);
+        int balanceWorthCents = userBalance.first *100 + userBalance.second;
+        const int orderWorthCents = (order->price.dollars* 100 + order->price.cents)*order->quantity;
+
+        balanceWorthCents+= orderWorthCents;
+        const int balanceAmountDollars = balanceWorthCents/100;
+        const int balanceAmountCents =  balanceWorthCents%100;
+        
+        db.setUserBalance(clientID,balanceAmountDollars,balanceAmountCents);
+    
+    }else{
+        int userStockHolding = db.getUserStockHolding(clientID);
+        userStockHolding+=order->quantity;
+        db.setUserStockHolding(clientId,userStockHolding);
+    }
+    
+}*/
+
+void updateUserEntry(DataBase& db,OrderMatch orderMatch,OrderSide side){
+    int clientID = orderMatch.ownerId;
+    
+    const std::pair<int,int> userBalance = db.getUserBalance(clientID);
+    int userStockHolding = db.getUserStockHolding(clientID);
+
+    int balanceWorthCents = userBalance.first *100 + userBalance.second;
+    const int orderWorthCents = (orderMatch.price.dollars* 100 + orderMatch.price.cents)*orderMatch.quantity;
+    
+
+    if(side == OrderSide::BUY){
+        balanceWorthCents -= orderWorthCents;
+        userStockHolding += orderMatch.quantity;    
+    }else if(side==OrderSide::SELL){
+        balanceWorthCents += orderWorthCents;
+        userStockHolding -= orderMatch.quantity;
+    }
+
+    const int balanceAmountDollars = balanceWorthCents/100;
+    const int balanceAmountCents =  balanceWorthCents%100;
+
+    db.setUserBalance(clientID,balanceAmountDollars,balanceAmountCents);
+    db.setUserStockHolding(clientID,userStockHolding);
+};
+
+void registerOrderChanges(DataBase& db,std::pair<MatchesList,OrderFillState> matchResult,Order* order){
+    int matchTotalWorth{ };
+    int matchTotalQuantity{ };
+
+    auto matches = matchResult.first.matches ;
+    auto fillstate = matchResult.second;
+    auto matchedOrderSide = (order->side == OrderSide::BUY) ? OrderSide::SELL : OrderSide::BUY; 
+
+    for (auto orderMatched : matches){
+        const int worthOrder = (orderMatched.price.dollars*100+ orderMatched.price.cents) * orderMatched.quantity; 
+        matchTotalWorth += worthOrder;
+        matchTotalQuantity += orderMatched.quantity;
+        updateUserEntry(db,orderMatched,matchedOrderSide);
+    }
+
+    if(fillstate!=OrderFillState::NOFILL){
+        OrderMatch originalOrder(
+            order->ownerID,
+            order->id,
+            matchTotalQuantity,
+            {matchTotalWorth/100,matchTotalWorth%100},
+            fillstate
+        );
+        updateUserEntry(db,originalOrder,order->side);
+    }
+
+};
+
 void handleNewOrder(OrderBook& orderbook,DataBase& db,DBCommunication &dbCommunication, DBrequest&request){
     int clientID = request.numericArgs[0];
     OrderType type = static_cast<OrderType>(request.numericArgs[1]);
@@ -80,18 +155,21 @@ void handleNewOrder(OrderBook& orderbook,DataBase& db,DBCommunication &dbCommuni
     int cents = request.numericArgs[5];
 
     Order *newOrder =new  Order(type,side,quantity,dollars,cents);
-    newOrder->setId(clientID); 
-
+    newOrder->setId(OrderBook::genOrderId()); 
+    newOrder->setOwnerId(clientID);
     
 
     DBresponse serverResponse;
 
     if(balanceSufficient(db,newOrder,clientID)){
+        //updateAccountBalance(db,newOrder,clientID);
         std::pair<MatchesList,OrderFillState> matchResult = orderbook.addOrder(newOrder);
         std::cout << "currently handling a order";
         
         serverResponse = {{"order created successfully"},{},CONNECT_SUCCESS};
         
+        registerOrderChanges(db,matchResult,newOrder);
+
     }else{
         serverResponse = {{"Failed to put order: check your account balance"},{},CONNECT_SUCCESS};
     }
