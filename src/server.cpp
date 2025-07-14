@@ -127,6 +127,7 @@ void registerOrderChanges(DataBase& db,std::pair<MatchesList,OrderFillState> mat
     auto matchedOrderSide = (order->side == OrderSide::BUY) ? OrderSide::SELL : OrderSide::BUY; 
 
     for (auto orderMatched : matches){
+        std::cout << "A MATCH WAS FOUND \n";
         const int worthOrder = (orderMatched.price.dollars*100+ orderMatched.price.cents) * orderMatched.quantity; 
         matchTotalWorth += worthOrder;
         matchTotalQuantity += orderMatched.quantity;

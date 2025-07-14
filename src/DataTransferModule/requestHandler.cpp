@@ -236,7 +236,7 @@ void RequestHandler::createNewOrder(request& request){
     int cents = request.getNumericArgs()[5];
 
     
-    DBrequest newOrderRequest{threadId,OB_NEW_ORDER,{},{clientID,side,quantity,dollars,cents}};
+    DBrequest newOrderRequest{threadId,OB_NEW_ORDER,{},{clientID,type,side,quantity,dollars,cents}};
     mtx->lock();
     dbCommunication->addNewRequest(newOrderRequest);
     mtx->unlock();
