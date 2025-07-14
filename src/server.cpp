@@ -51,7 +51,7 @@ void handleRetrieveBalanceData(DataBase& db,DBCommunication &dbCommunication, DB
 bool balanceSufficient(DataBase &db,Order *order,int userId){
     std::pair<int,int> userBalance = db.getUserBalance(userId);
     
-    if(order->side==OrderSide::BUY){
+    if(order->type != OrderType::MARKET && order->side==OrderSide::BUY){
         int balanceWorthCents = userBalance.first *100 + userBalance.second;
         int orderWorthCents =  (order->price.dollars*100 + order->price.cents)*order->quantity;
         
@@ -84,27 +84,21 @@ void handleNewOrder(OrderBook& orderbook,DataBase& db,DBCommunication &dbCommuni
 
     
 
+    DBresponse serverResponse;
+
     if(balanceSufficient(db,newOrder,clientID)){
         std::pair<MatchesList,OrderFillState> matchResult = orderbook.addOrder(newOrder);
         std::cout << "currently handling a order";
         
-        DBresponse serverResponse{{"order created successfully"},{},CONNECT_SUCCESS};
-
-        mtx.lock();
-        dbCommunication.addResponse(request.threadId,serverResponse);
-        mtx.unlock();
-
-    }else{
-        DBresponse serverResponse{{"Failed to put order: check your account balance"},{},CONNECT_SUCCESS};
-
-        mtx.lock();
-        dbCommunication.addResponse(request.threadId,serverResponse);
-        mtx.unlock();
+        serverResponse = {{"order created successfully"},{},CONNECT_SUCCESS};
         
-    };
-
-
-
+    }else{
+        serverResponse = {{"Failed to put order: check your account balance"},{},CONNECT_SUCCESS};
+    }
+    
+    mtx.lock();
+    dbCommunication.addResponse(request.threadId,serverResponse);
+    mtx.unlock();
 
 }
 void dbThread(DBCommunication& dbCommunication ){

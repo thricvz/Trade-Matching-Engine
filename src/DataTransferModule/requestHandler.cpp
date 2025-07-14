@@ -110,7 +110,7 @@ void RequestSender::constructNewOrderRequest(){
     std::cout << "Enter order side (buy or sell) :";
     std::cin >> userInput;
     std::optional<OrderSide> orderSide {getOrderSide(userInput)};
-    if(!orderType.has_value()){
+    if(!orderSide.has_value()){
         std::cout <<" not found please provide a valid order side";
         return;
     }
