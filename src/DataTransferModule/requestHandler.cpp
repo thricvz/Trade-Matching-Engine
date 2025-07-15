@@ -36,6 +36,9 @@ void RequestSender::handleInput(){
             constructBalanceRequest();
         }else if(request=="order"){
             constructNewOrderRequest();
+
+        }else if(request=="stocks"){
+            constructStocksRequest();
         }else{
             //uppon no match default message
             constructUnkownRequest();
@@ -202,6 +205,22 @@ void RequestSender::constructUnkownRequest(){
 };
 
 
+void RequestSender::constructStocksRequest(){
+    request getStocksRequests(COMMUNICATION,STOCKS,{},{clientID});
+    vector<uint8_t> serializedData=getStocksRequests.serialize();
+    sendChunk(clientSocket,serializedData);
+
+
+    request serverFeedbackRequest;
+    vector<uint8_t> serverFeedbackByteStream;
+    receiveChunks(clientSocket,serverFeedbackByteStream);
+    serverFeedbackRequest.deserialize(serverFeedbackByteStream);
+
+    int stocks = serverFeedbackRequest.getNumericArgs()[0];
+
+    std::cout << "you have " << stocks <<" stocks at your account ";
+};
+
 void RequestSender::constructMessageRequest(){
     char message[MAX_MSG_LENGTH];
     cout << "Please enter your message: ";
@@ -336,6 +355,8 @@ void RequestHandler::handleInput(){
             case BALANCE:
                 getBalanceUser(requestReceived);
                 break;
+            case STOCKS:
+                getStocksUser(requestReceived);
             case ORDERBOOK_NEW_ORDER:
                 createNewOrder(requestReceived);
                 break;
@@ -413,7 +434,7 @@ void RequestHandler::constructBalanceRequest(int dollars,int cents){
 void RequestHandler::getBalanceUser(request& request){
     int userId  = request.getNumericArgs()[0];
     if(userId==UNVALID_ID){
-        constructInfoRequest("Fucking wrong id mate");
+        constructInfoRequest("Wrong ID");
         return;
 
     }
@@ -431,4 +452,28 @@ void RequestHandler::getBalanceUser(request& request){
     int BalanceCents = requestResponse.numericArgs[1];
 
     constructBalanceRequest(BalanceDollars,BalanceCents);
+};
+
+
+void RequestHandler::getStocksUser(request& stockCheckup){
+    int userId  = stockCheckup.getNumericArgs()[0];
+    if(userId==UNVALID_ID){
+        constructInfoRequest("Wrong ID");
+        return;
+
+    }
+    DBrequest getStockHolding{threadId,DB_RETRIEVE_USER_STOCKS,{},{userId}};
+    std::mutex mtx;
+    mtx.lock();
+    dbCommunication->addNewRequest(getStockHolding);
+    mtx.unlock();
+
+    mtx.lock();
+    DBresponse requestResponse = dbCommunication->waitResponse(threadId);
+    mtx.unlock();
+
+    const int stockAmount = requestResponse.numericArgs[0];
+    
+    constexpr int empty_field = 0;
+    constructBalanceRequest(stockAmount,empty_field);
 };

@@ -48,6 +48,16 @@ void handleRetrieveBalanceData(DataBase& db,DBCommunication &dbCommunication, DB
     mtx.unlock();
 };
 
+void handleRetrieveStockUserData(DataBase& db,DBCommunication &dbCommunication, DBrequest&request){
+    int userId= request.numericArgs[0];
+    int userStockHolding= db.getUserStockHolding(userId);
+
+    DBresponse response{{},{userStockHolding}};
+    mtx.lock();
+    dbCommunication.addResponse(request.threadId,response);
+    mtx.unlock();
+}
+
 bool balanceSufficient(DataBase &db,Order *order,int userId){
     std::pair<int,int> userBalance = db.getUserBalance(userId);
     
@@ -183,6 +193,9 @@ void dbThread(DBCommunication& dbCommunication ){
                 break;
             case DB_RETRIEVE_USER_BALANCE:
                 handleRetrieveBalanceData(db,dbCommunication,request.value());
+                break;
+            case DB_RETRIEVE_USER_STOCKS:
+                handleRetrieveStockUserData(db,dbCommunication,request.value());
                 break;
             case OB_NEW_ORDER:
                 handleNewOrder(orderbook,db,dbCommunication,request.value());

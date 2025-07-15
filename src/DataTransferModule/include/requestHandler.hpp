@@ -30,6 +30,7 @@ class RequestSender{
         void constructRegisterRequest();
         void constructBalanceRequest();
         void constructNewOrderRequest();
+        void constructStocksRequest();
         public: 
         RequestSender(int clientSocket_);
         
@@ -59,6 +60,7 @@ class RequestSender{
             void constructBalanceRequest(int dollars,int cents);
             void loginUser(request& loginRequest);
             void getBalanceUser(request& balanceCheckUp);
+            void getStocksUser(request& stockCheckup);
             void createNewOrder(request& request);
             //communication for the client
             void constructInfoRequest(const char* msg);
