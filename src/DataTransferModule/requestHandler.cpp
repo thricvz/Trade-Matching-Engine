@@ -5,6 +5,14 @@
 #include "DBCommunicationModuleCodes.hpp"
 #include "orderTypes.h"
 #include <optional> 
+
+using std::string_view;
+using std::map;
+using std::string;
+using std::optional;
+using std::cout;
+using std::cin;
+
 RequestSender::RequestSender(int clientSocket_){
     clientSocket =  clientSocket_;
 };
@@ -12,7 +20,7 @@ RequestSender::RequestSender(int clientSocket_){
 void RequestSender::handleInput(){
     string request;
     while(!exitDemanded){
-        std::cin >> request;
+        cin >> request;
 
         if(request=="exit"){
             constructExitRequest();
@@ -72,58 +80,115 @@ void getOrderResultMessage(int clientSocket){
     vector<uint8_t> serverFeedbackByteStream;
     receiveChunks(clientSocket,serverFeedbackByteStream);
     serverFeedbackRequest.deserialize(serverFeedbackByteStream);
-    std::cout << serverFeedbackRequest.getTextArgs()[0];
+    cout << serverFeedbackRequest.getTextArgs()[0] << "\n";
 }
+
+
+bool inputInteger(int &returnVariable,string_view prompt,string_view failureMessage,bool requiredStrictlyPositiveInput=false ){
+    string input{};
+    cout << prompt << " ";
+    cin >> input;
+
+
+    try{
+        
+        int inputNumber = stoi(input);
+
+        bool strictlyPositiveInput = requiredStrictlyPositiveInput && (inputNumber >0 ); 
+        bool positiveInput = (!requiredStrictlyPositiveInput) && (inputNumber >=0 );
+
+        if(strictlyPositiveInput || positiveInput){
+            returnVariable = inputNumber;
+            return true;
+
+        }else{
+            throw std::runtime_error("unvalid bounds");     
+        }  
+
+    }catch(...){
+        std::cout<< failureMessage << "\n";
+        return false;
+    }
+} 
+
+template<typename T>
+bool selectOptionEnumeration(T& returnVariable,string_view prompt,string_view failureMessage,map<string_view,T> options){
+    
+    string input{};
+    cout << prompt << " ";
+    cin >> input;
+
+    if (options.find(input) != options.end())
+    {   
+        returnVariable = options[input];
+        return true;
+    }
+    
+    cout << failureMessage << "\n";
+    return false;    
+}
+
+
+
 void RequestSender::constructNewOrderRequest(){
     std::string userInput{};
     
     if(clientID == UNVALID_ID){
-        std::cout <<"please login first before putting an order" << std::endl;
+        cout <<"please login first before putting an order" << std::endl;
         return ;
-    }
-    
-    std::cout << "Enter order type( limit or market ):";
-    std::cin >> userInput;
-    std::optional<OrderType> orderType {getOrderType(userInput)};
-    
-    if(!orderType.has_value()){
-        std::cout <<"Ordertype not found please provide a valid ordertype" << std::endl;
-        return;
-    }
+    }   
+    OrderType orderType{ }; 
+    auto inputSuccess = selectOptionEnumeration(
+        orderType,
+        "Enter order type( limit or market ):",
+        "Please Enter a valid order type",
+        {
+            {"limit",OrderType::LIMIT},
+            {"market",OrderType::MARKET},
+        }
+    );
+
+    if(!inputSuccess) return;
+
+
+    OrderSide orderSide{ }; 
+    inputSuccess = selectOptionEnumeration(
+        orderSide,
+        "Enter order side (buy or sell):",
+        "not found please provide a valid order side ",
+        {
+            {"sell",OrderSide::SELL},
+            {"buy",OrderSide::BUY},
+        }
+    );
+    if(!inputSuccess) return;
+
     //order price
     int dollars{};
     int cents{};
-    if(orderType.value()==OrderType::LIMIT){
-        std::cout << "Enter the desired price in dollars";
-        std::cin >> userInput;   
-        dollars = stoi(userInput);
+    if(orderType == OrderType::LIMIT){
+    
+        inputSuccess = inputInteger(dollars,"Enter the desired price in dollars:","Please Enter a valid Price");
+        if(!inputSuccess) return;
+        
+        inputSuccess = inputInteger(cents,"Enter the desired price in cents:","Please Enter a valid Price");
+        if(!inputSuccess) return;
 
-        std::cout << "Enter the desired price in cents";
-        std::cin >> userInput;   
-        cents = stoi(userInput);
 
-        if(dollars <=0 || cents <= 0){
-            std::cout << "Please enter a valid price";
+        if(dollars == 0 && cents==0){
+            cout << "Please enter a valid price";
             return;
         }
     }
-    std::cout << "Enter order side (buy or sell) :";
-    std::cin >> userInput;
-    std::optional<OrderSide> orderSide {getOrderSide(userInput)};
-    if(!orderSide.has_value()){
-        std::cout <<" not found please provide a valid order side";
-        return;
-    }
 
-    std::cout << "Enter the quanity : ";
-    std::cin >> userInput;
-    int quantity{stoi(userInput)};
-    if(quantity<=0){
-        std::cout << "Please enter a valid quantity";
-        return;
-    }
+    int quantity{ };
+    inputSuccess = inputInteger(quantity,"Enter the desired quantity:","Please provide a valid Quantity", true);
+    if(!inputSuccess) return;
 
-    request newOrderRequest(ORDERBOOK_NEW_ORDER,ORDERBOOK_NEW_ORDER,{},{clientID, orderType.value(),orderSide.value(),quantity,dollars,cents});
+    request newOrderRequest(ORDERBOOK_NEW_ORDER,ORDERBOOK_NEW_ORDER,
+        {},
+        {clientID, orderType,orderSide,quantity,dollars,cents}
+    );
     vector<uint8_t> serializedData=newOrderRequest.serialize();
 
     sendChunk(clientSocket,serializedData);
@@ -133,17 +198,17 @@ void RequestSender::constructNewOrderRequest(){
 };
 
 void RequestSender::constructUnkownRequest(){
-    std::cout << "UNKNOWN COMMAND\n";
+    cout << "UNKNOWN COMMAND\n";
 };
 
 
 void RequestSender::constructMessageRequest(){
     char message[MAX_MSG_LENGTH];
-    std::cout << "Please enter your message: ";
+    cout << "Please enter your message: ";
     
-    std::cin.ignore();
-    std::cin.getline(message,MAX_MSG_LENGTH-1);  
-    std::cout << "\n";
+    cin.ignore();
+    cin.getline(message,MAX_MSG_LENGTH-1);  
+    cout << "\n";
 
     request msgRequest(COMMUNICATION,MSG,{message});
     vector<uint8_t> serializedData=msgRequest.serialize();
@@ -155,11 +220,11 @@ void RequestSender::constructLoginRequest(){
     char username[MAX_CREDENTIALS_LENGTH];
     char password[MAX_CREDENTIALS_LENGTH];
 
-    std::cout << "New username(" << MAX_CREDENTIALS_LENGTH << "  characters at most): " ;
-    std::cin >> username;
+    cout << "New username(" << MAX_CREDENTIALS_LENGTH << "  characters at most): " ;
+    cin >> username;
 
-    std::cout << "Enter your password" << MAX_CREDENTIALS_LENGTH << " characters at most): " ;
-    std::cin >> password;
+    cout << "Enter your password" << MAX_CREDENTIALS_LENGTH << " characters at most): " ;
+    cin >> password;
 
     request loginRequest(COMMUNICATION,LOGIN,{username,password},{});
     vector<uint8_t> serializedData=loginRequest.serialize();
@@ -174,21 +239,21 @@ void RequestSender::constructLoginRequest(){
     
     if(serverFeedbackRequest.getMessageCommand()==LOGIN){
         clientID = serverFeedbackRequest.getNumericArgs()[0];
-        std::cout << clientID;
+        cout << clientID;
         return;
     }
-    std::cout << serverFeedbackRequest.getTextArgs()[0];
+    cout << serverFeedbackRequest.getTextArgs()[0];
 };
 
 void RequestSender::constructRegisterRequest(){
     char username[MAX_CREDENTIALS_LENGTH];
     char password[MAX_CREDENTIALS_LENGTH];
 
-    std::cout << "New username(" << MAX_CREDENTIALS_LENGTH << "  characters at most): " ;
-    std::cin >> username;
+    cout << "New username(" << MAX_CREDENTIALS_LENGTH << "  characters at most): " ;
+    cin >> username;
 
-    std::cout << "Enter your password" << MAX_CREDENTIALS_LENGTH << " characters at most): " ;
-    std::cin >> password;
+    cout << "Enter your password" << MAX_CREDENTIALS_LENGTH << " characters at most): " ;
+    cin >> password;
 
     request loginRequest(COMMUNICATION,REGISTER,{username,password},{});
     vector<uint8_t> serializedData=loginRequest.serialize();
@@ -200,7 +265,7 @@ void RequestSender::constructRegisterRequest(){
     vector<uint8_t> serverFeedbackByteStream;
     receiveChunks(clientSocket,serverFeedbackByteStream);
     serverFeedbackRequest.deserialize(serverFeedbackByteStream);
-    std::cout << serverFeedbackRequest.getTextArgs()[0];
+    cout << serverFeedbackRequest.getTextArgs()[0];
     
 }
 
@@ -217,7 +282,7 @@ void RequestSender::constructBalanceRequest(){
     int dollars =  serverFeedbackRequest.getNumericArgs()[0];
     int cents =  serverFeedbackRequest.getNumericArgs()[1];
 
-    std::cout << "you have " << dollars<< " dollars and " << cents << " cents in your account" << std::endl;
+    cout << "you have " << dollars<< " dollars and " << cents << " cents in your account" << std::endl;
 }
 //requesthandler for server
 RequestHandler::RequestHandler(int clientSocket_,DBCommunication *ptr,std::mutex* mtx_){
@@ -260,7 +325,7 @@ void RequestHandler::handleInput(){
                 endConnection();
                 break;
             case MSG:
-                std::cout << requestReceived.getTextArgs()[0] << std::endl;
+                cout << requestReceived.getTextArgs()[0] << std::endl;
                 break;
             case REGISTER:
                 registerNewUser(requestReceived);

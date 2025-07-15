@@ -73,26 +73,6 @@ bool balanceSufficient(DataBase &db,Order *order,int userId){
 }
 
 
-/*void updateAccountBalance(DataBase& db,){
-    if(order->side == OrderSide::SELL){
-        const std::pair<int,int> userBalance = db.getUserBalance(clientID);
-        int balanceWorthCents = userBalance.first *100 + userBalance.second;
-        const int orderWorthCents = (order->price.dollars* 100 + order->price.cents)*order->quantity;
-
-        balanceWorthCents+= orderWorthCents;
-        const int balanceAmountDollars = balanceWorthCents/100;
-        const int balanceAmountCents =  balanceWorthCents%100;
-        
-        db.setUserBalance(clientID,balanceAmountDollars,balanceAmountCents);
-    
-    }else{
-        int userStockHolding = db.getUserStockHolding(clientID);
-        userStockHolding+=order->quantity;
-        db.setUserStockHolding(clientId,userStockHolding);
-    }
-    
-}*/
-
 void updateUserEntry(DataBase& db,OrderMatch orderMatch,OrderSide side){
     int clientID = orderMatch.ownerId;
     
