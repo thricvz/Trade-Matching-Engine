@@ -65,3 +65,52 @@ TEST(Serialization, FullRequest){
     EXPECT_TRUE(requestRestore==unchangedRequest);
 
 }
+
+
+TEST(Serialization2, BIGINTEGERS){
+    
+    uint8_t msgCommand = 88;
+    uint8_t msgType = 45;
+
+    char w1[] = "sve";
+    char w2[] = "the ";
+    char w3[] = "woworrldwide";
+    char w4[] = "ffldl";
+
+    std::vector<const char*> args = {w1,w2,w3};
+    std::vector<int32_t> numericArgs = {32,500,65};
+
+    request requestToSerialize(msgCommand,msgType,args,numericArgs);
+    request unchangedRequest(msgCommand,msgType,args,numericArgs);
+
+    std::vector<uint8_t> byteStream = requestToSerialize.serialize();
+    request requestRestore;
+    requestRestore.deserialize(byteStream);
+
+    EXPECT_TRUE(requestRestore==unchangedRequest);
+
+}
+
+TEST(Serialization, BIGINTEGERS2){
+    
+    uint8_t msgCommand = 88;
+    uint8_t msgType = 45;
+
+    char w1[] = "sve";
+    char w2[] = "the ";
+    char w3[] = "woworrldwide";
+    char w4[] = "ffldl";
+
+    std::vector<const char*> args = {w1,w2,w3};
+    std::vector<int32_t> numericArgs = {13000,0,65};
+
+    request requestToSerialize(msgCommand,msgType,args,numericArgs);
+    request unchangedRequest(msgCommand,msgType,args,numericArgs);
+
+    std::vector<uint8_t> byteStream = requestToSerialize.serialize();
+    request requestRestore;
+    requestRestore.deserialize(byteStream);
+
+    EXPECT_TRUE(requestRestore==unchangedRequest);
+
+}

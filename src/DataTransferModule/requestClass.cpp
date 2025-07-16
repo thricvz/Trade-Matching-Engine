@@ -88,7 +88,8 @@ void request::serialize_args(vector<uint8_t> &stream,std::vector<int32_t> args_)
 
         for(int offset=3;offset>=0;offset--){
             //extract current byte
-            std::uint16_t currentByte = currentInteger & (BYTE_EXTRACT<<(offset*8));
+            std::uint32_t valueExtracted = currentInteger & (BYTE_EXTRACT<<(offset*8));
+            std::uint8_t currentByte =  (valueExtracted>>(offset*8));
             stream.push_back(currentByte);
         }
     }

@@ -222,6 +222,13 @@ void RequestSender::constructUnkownRequest(){
 
 
 void RequestSender::constructStocksRequest(){
+
+
+    if(clientID==UNVALID_ID){
+        std::cout << "Login required!\n";
+        return ;
+    }
+    
     request getStocksRequests(COMMUNICATION,STOCKS,{},{clientID});
     vector<uint8_t> serializedData=getStocksRequests.serialize();
     sendChunk(clientSocket,serializedData);
@@ -305,6 +312,11 @@ void RequestSender::constructRegisterRequest(){
 }
 
 void RequestSender::constructBalanceRequest(){
+
+    if(clientID==UNVALID_ID){
+        std::cout << "Login required!\n";
+        return ;
+    }
     request getBalanceRequest(COMMUNICATION,BALANCE,{},{clientID});
     vector<uint8_t> serializedData=getBalanceRequest.serialize();
     sendChunk(clientSocket,serializedData);

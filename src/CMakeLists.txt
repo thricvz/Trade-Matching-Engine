@@ -6,9 +6,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_compile_options(-Wpedantic)
+
 set(ENABLE_TESTS ON)
 
 if(ENABLE_TESTS)
+    set(CMAKE_BUILD_TYPE Debug)
     enable_testing()
 endif()
 
