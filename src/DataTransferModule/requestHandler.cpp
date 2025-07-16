@@ -6,6 +6,8 @@
 #include "orderTypes.h"
 #include <optional> 
 
+
+
 using std::string_view;
 using std::map;
 using std::string;
@@ -20,12 +22,14 @@ RequestSender::RequestSender(int clientSocket_){
 void RequestSender::handleInput(){
     string request;
     while(!exitDemanded){
+        cout << ">> ";
         cin >> request;
 
+        //replace this by a map with functions pointers to each case
         if(request=="exit"){
             constructExitRequest();
 
-        }else if(request=="msg"){
+        }else if(request=="message"){
             constructMessageRequest();
         }else if(request=="login"){
             constructLoginRequest();
@@ -39,7 +43,10 @@ void RequestSender::handleInput(){
 
         }else if(request=="stocks"){
             constructStocksRequest();
-        }else{
+        }else if(request =="help"){
+            constructHelpCommand();
+        }
+        else{
             //uppon no match default message
             constructUnkownRequest();
         }    
@@ -85,6 +92,7 @@ void getOrderResultMessage(int clientSocket){
     serverFeedbackRequest.deserialize(serverFeedbackByteStream);
     cout << serverFeedbackRequest.getTextArgs()[0] << "\n";
 }
+
 
 
 bool inputInteger(int &returnVariable,string_view prompt,string_view failureMessage,bool requiredStrictlyPositiveInput=false ){
@@ -199,6 +207,14 @@ void RequestSender::constructNewOrderRequest(){
 
     getOrderResultMessage(clientSocket);
 };
+
+
+void  RequestSender::constructHelpCommand(){
+    for(auto command : commandList){
+        std::cout << "-" << command << "\n";
+    }
+};
+
 
 void RequestSender::constructUnkownRequest(){
     cout << "UNKNOWN COMMAND\n";

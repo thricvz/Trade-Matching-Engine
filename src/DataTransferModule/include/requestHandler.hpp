@@ -23,6 +23,10 @@ class RequestSender{
     int clientID{UNVALID_ID};
     private:
         //methods for cunstructing the different types of requests
+        static inline vector<string> commandList   {
+            "exit","message","login" ,"register", "stocks","balance","order"
+        };
+
         void constructExitRequest();
         void constructUnkownRequest();
         void constructMessageRequest();
@@ -31,13 +35,14 @@ class RequestSender{
         void constructBalanceRequest();
         void constructNewOrderRequest();
         void constructStocksRequest();
+        void constructHelpCommand();
         public: 
         RequestSender(int clientSocket_);
         
         //methods for constructing the different types of requests
         void handleInput();   
 };
-    
+
     
     //for the use of the server
     
