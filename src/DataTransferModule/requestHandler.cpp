@@ -364,6 +364,9 @@ void RequestHandler::handleInput(){
         
 
         receiveChunks(clientSocket,serializedRequest);
+        if(!std::size(serializedRequest))
+            continue;
+            
         request requestReceived;
         requestReceived.deserialize(serializedRequest);
 
