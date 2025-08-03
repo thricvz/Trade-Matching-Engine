@@ -8,24 +8,27 @@
 #include "byteCodes.h"
 #include "DataBaseCommunication.hpp"
 #include "DataBaseCommunicationCodes.hpp"
-
-
+#include <functional>
 
 using std::string;
 using std::map;
 
 
+
 const int UNVALID_ID =-1;
 
 class RequestSender{
-    bool exitDemanded=false;
-    int clientSocket{};
-    int clientID{UNVALID_ID};
+
+    public: 
+        RequestSender(int clientSocket_);
+        
+        //methods for constructing the different types of requests
+        void handleInput();   
     private:
-        //methods for cunstructing the different types of requests
-        static inline vector<string> commandList   {
-            "exit","message","login" ,"register", "stocks","balance","order"
-        };
+        bool exitDemanded=false;
+        int clientSocket{};
+        int clientID{UNVALID_ID};
+
 
         void constructExitRequest();
         void constructUnkownRequest();
@@ -36,11 +39,19 @@ class RequestSender{
         void constructNewOrderRequest();
         void constructStocksRequest();
         void constructHelpCommand();
-        public: 
-        RequestSender(int clientSocket_);
-        
-        //methods for constructing the different types of requests
-        void handleInput();   
+
+        using requestFunction = void (RequestSender::*)();
+
+        static const inline std::map<std::string_view,requestFunction> requestOptions{
+            {"exit",&RequestSender::constructExitRequest},
+            {"message",&RequestSender::constructMessageRequest},
+            {"login",&RequestSender::constructLoginRequest},
+            {"register",&RequestSender::constructRegisterRequest},
+            {"stocks",&RequestSender::constructStocksRequest},
+            {"balance",&RequestSender::constructBalanceRequest},
+            {"order",&RequestSender::constructStocksRequest},
+            {"help",&RequestSender::constructHelpCommand}
+        };
 };
 
     

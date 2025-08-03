@@ -25,31 +25,12 @@ void RequestSender::handleInput(){
         cout << ">> ";
         cin >> request;
 
-        //replace this by a map with functions pointers to each case
-        if(request=="exit"){
-            constructExitRequest();
-
-        }else if(request=="message"){
-            constructMessageRequest();
-        }else if(request=="login"){
-            constructLoginRequest();
-
-        }else if(request=="register"){
-            constructRegisterRequest();
-        }else if(request=="balance"){
-            constructBalanceRequest();
-        }else if(request=="order"){
-            constructNewOrderRequest();
-
-        }else if(request=="stocks"){
-            constructStocksRequest();
-        }else if(request =="help"){
-            constructHelpCommand();
-        }
-        else{
-            //uppon no match default message
+        auto commandEntered = requestOptions.find(request);
+        if(commandEntered!=requestOptions.end()){
+            (this->*(commandEntered->second))();
+        }else{
             constructUnkownRequest();
-        }    
+        }  
     }
 };   
 
@@ -210,8 +191,8 @@ void RequestSender::constructNewOrderRequest(){
 
 
 void  RequestSender::constructHelpCommand(){
-    for(auto command : commandList){
-        std::cout << "-" << command << "\n";
+    for(auto command : requestOptions){
+        std::cout << "-" << command.first << "\n";
     }
 };
 
