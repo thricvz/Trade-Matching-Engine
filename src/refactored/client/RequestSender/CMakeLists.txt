@@ -1,0 +1,6 @@
+
+include_directories(RequestClass/include)
+add_subdirectory(RequestClass)
+
+add_library(RequestSenderModule requestSender.cpp)
+target_link_libraries(RequestSenderModule RequestModule ChunkTransmissionModule)
