@@ -97,6 +97,7 @@ TEST(Serialization, BIGINTEGERS2){
     std::vector<const char*> args = {w1,w2,w3};
     std::vector<int32_t> numericArgs = {13000,0,65};
 
+
     request requestToSerialize(msgCommand,args,numericArgs);
     request unchangedRequest(msgCommand,args,numericArgs);
 

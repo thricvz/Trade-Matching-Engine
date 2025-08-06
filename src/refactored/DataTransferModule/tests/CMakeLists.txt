@@ -10,7 +10,7 @@ include_directories(${GTEST_INCLUDE_DIRS})
 
 
 if(ENABLE_TESTS)
-    add_executable(DataTransmissionModuleTESTS tests.cpp)
-    target_link_libraries(DataTransmissionModuleTESTS GTest::gtest_main DataTransmissionModule)
-    add_test(NAME DataTranmissionModuleTests COMMAND $<TARGET_FILE:DataTransmissionModuleTESTS>)
+    add_executable(testMain tests.cpp)
+    target_link_libraries(testMain GTest::gtest_main RequestModule)
+    add_test(NAME testName COMMAND $<TARGET_FILE:testMain>)
 endif()

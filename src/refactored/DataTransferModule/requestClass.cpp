@@ -1,8 +1,7 @@
 #include "requestClass.hpp"
 #include <sys/socket.h>
 #include <cstring>
-#include <exception>
-
+#include <stdexcept>
 
 using std::vector;
 const int32_t BYTE_EXTRACT = 0b11111111;
@@ -25,7 +24,7 @@ request::request(RequestCommand command,vector<const char*> textArgs,vector<int3
 };
 
 vector<uint8_t> request::serialize(){
-    vector<uint8_t> encoded_data{2};
+    vector<uint8_t> encoded_data(2);
 
     encoded_data[RequestDataOffSet::packetSize] == 0;
     encoded_data[RequestDataOffSet::command] = static_cast<uint8_t>(command);
