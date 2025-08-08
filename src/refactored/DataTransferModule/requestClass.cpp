@@ -1,6 +1,7 @@
 #include "requestClass.hpp"
 #include <sys/socket.h>
 #include <cstring>
+#include <string.h>
 #include <stdexcept>
 
 using std::vector;
@@ -19,9 +20,27 @@ enum RequestDataOffSet : int{
 
 request::request(RequestCommand command,vector<const char*> textArgs,vector<int32_t> numericArgs){
     this->command = command;
-    textData = textArgs;
     numericData = numericArgs;
+    
+    
+    for(auto string:textArgs){
+        int stringLength = strlen(string);
+        char * stringCopy=  new char[stringLength];
+        strcpy(stringCopy,string);
+
+        textData.push_back(stringCopy);
+    }
+
 };
+
+
+request::~request(){
+    for(auto allocatedString : textData){
+        delete[] allocatedString;
+    }
+    textData.clear();
+    numericData.clear();
+}
 
 vector<uint8_t> request::serialize(){
     vector<uint8_t> encoded_data(2);
@@ -63,9 +82,12 @@ void request::serialize_args(vector<uint8_t> &stream,std::vector<const char*> ar
             stream.push_back(*currentString);
             currentString++;
             currentStringLength++;
+            
         };
+        //add the null terminator
         stream.push_back('\0');
-        stream.insert(stream.begin()+offsetStringLengthByte,offsetStringLengthByte+1);
+        currentString+=1;
+        stream.insert(stream.begin()+offsetStringLengthByte,currentStringLength);
     }
 };
 
@@ -141,7 +163,7 @@ bool request::operator==(request const &lhs) const{
 
     lhsIndex=0;
     for(auto data : textData){
-        if(data!=lhs.textData[lhsIndex])
+        if(strcmp(data,lhs.getTextData()[lhsIndex]))
             return false;
         lhsIndex++;
     }
@@ -168,7 +190,7 @@ void request::deserializeIntegerList(vector<uint8_t> &data,int listSize,int &lis
 void request::deserializeStringList(vector<uint8_t> &data,int listSize,int &listIndex){
     while(listSize>0){
         int stringSize = data[listIndex];
-        char* currentString = new char[stringSize];
+        char* currentString = new char[stringSize]; //space for the
 
         for(int i=0;i<stringSize;i++){
             listIndex++;

@@ -1,6 +1,24 @@
 #include "requestClass.hpp"
 #include <gtest/gtest.h>
 
+TEST(MemberFunction,Equality){
+    RequestCommand msgCommand = RequestCommand::BALANCE;
+
+    char w1[] = "THEY SHould be equal now";
+    char w2[] = "shein";
+    std::vector<const char*> textArgs = {w1,w2};
+    std::vector<int32_t> numericArgs = {32,45,65};
+
+
+
+
+    request request1(msgCommand,textArgs,numericArgs);
+    request unchangedRequest(msgCommand,textArgs,numericArgs);
+    EXPECT_TRUE(request1==unchangedRequest);
+
+}
+
+
 TEST(Serialization, IntegerArguments){
     
     RequestCommand msgCommand = RequestCommand::MSG;

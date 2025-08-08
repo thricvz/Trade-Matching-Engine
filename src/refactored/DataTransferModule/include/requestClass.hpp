@@ -12,6 +12,11 @@ class request{
     public:
         request()=default;
         request(RequestCommand command,vector<const char*> textArgs,vector<int32_t> numericArgs);
+        ~request();
+        
+        request(const request&) = delete;
+        request& operator=(const request&) =delete;
+
 
         vector<uint8_t> serialize();
         void deserialize(vector<uint8_t>);
