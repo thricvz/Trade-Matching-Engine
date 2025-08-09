@@ -1,8 +1,4 @@
-#include <map>
-#include <string>
-#include <functional>
-#include "ChunkTransmission.hpp" //file for the chunk transmision
-#include "requestCodes.hpp" //placeholder for the requestCodes file
+#pragma once
 
 const int UNVALID_ID =-1;
 

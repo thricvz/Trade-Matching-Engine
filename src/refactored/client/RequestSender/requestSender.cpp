@@ -1,6 +1,30 @@
-#include "include/RequestSender.hpp"
+#include <iostream>
+#include<optional>
+#include <map>
+#include <string>
+#include <functional>
+
+#include "include/requestSender.hpp"
+
+#include "requestClass.hpp"
+#include "ChunkTransmission.hpp" 
+#include "RequestClassByteCodes.hpp" 
 
 
+//PLACEHOLDER for now
+//#include "OrderBookDataTypes.hpp" // a header file that contains the various data about an orderbook
+
+enum class OrderType : uint8_t
+{
+    MARKET,
+    LIMIT
+};
+
+enum class OrderSide : uint8_t
+{
+    SELL,
+    BUY
+};
 
 using std::string_view;
 using std::map;
@@ -31,7 +55,7 @@ void RequestSender::handleInput(){
 
 void RequestSender::constructExitRequest(){
     exitDemanded = true;
-    request endRequest(COMMUNICATION,END_STREAM,{},{});
+    request endRequest(RequestCommand::END_STREAM,{},{});
     vector<uint8_t> serializedData=endRequest.serialize();
 
     sendChunk(clientSocket,serializedData);
@@ -65,7 +89,7 @@ void getOrderResultMessage(int clientSocket){
     vector<uint8_t> serverFeedbackByteStream;
     receiveChunks(clientSocket,serverFeedbackByteStream);
     serverFeedbackRequest.deserialize(serverFeedbackByteStream);
-    cout << serverFeedbackRequest.getTextArgs()[0] << "\n";
+    cout << serverFeedbackRequest.getTextData()[0] << "\n";
 }
 
 
@@ -118,7 +142,6 @@ bool selectOptionEnumeration(T& returnVariable,string_view prompt,string_view fa
 
 void RequestSender::constructNewOrderRequest(){
     std::string userInput{};
-    
     if(clientID == UNVALID_ID){
         cout <<"please login first before putting an order" << std::endl;
         return ;
@@ -133,10 +156,7 @@ void RequestSender::constructNewOrderRequest(){
             {"market",OrderType::MARKET},
         }
     );
-
     if(!inputSuccess) return;
-
-
     OrderSide orderSide{ }; 
     inputSuccess = selectOptionEnumeration(
         orderSide,
@@ -148,38 +168,27 @@ void RequestSender::constructNewOrderRequest(){
         }
     );
     if(!inputSuccess) return;
-
-    //order price
     int dollars{};
     int cents{};
     if(orderType == OrderType::LIMIT){
-    
         inputSuccess = inputInteger(dollars,"Enter the desired price in dollars:","Please Enter a valid Price");
         if(!inputSuccess) return;
-        
         inputSuccess = inputInteger(cents,"Enter the desired price in cents:","Please Enter a valid Price");
         if(!inputSuccess) return;
-
-
         if(dollars == 0 && cents==0){
             cout << "Please enter a valid price";
             return;
         }
     }
-
     int quantity{ };
     inputSuccess = inputInteger(quantity,"Enter the desired quantity:","Please provide a valid Quantity", true);
     if(!inputSuccess) return;
-
-    request newOrderRequest(ORDERBOOK_NEW_ORDER,ORDERBOOK_NEW_ORDER,
+    request newOrderRequest(RequestCommand::ORDERBOOK_NEW_ORDER,
         {},
-        {clientID, orderType,orderSide,quantity,dollars,cents}
+        {clientID, static_cast<int32_t>(orderType),static_cast<int32_t>(orderSide),quantity,dollars,cents}
     );
     vector<uint8_t> serializedData=newOrderRequest.serialize();
-
     sendChunk(clientSocket,serializedData);
-
-
     getOrderResultMessage(clientSocket);
 };
 
@@ -204,7 +213,7 @@ void RequestSender::constructStocksRequest(){
         return ;
     }
     
-    request getStocksRequests(COMMUNICATION,STOCKS,{},{clientID});
+    request getStocksRequests(RequestCommand::STOCKS,{},{clientID});
     vector<uint8_t> serializedData=getStocksRequests.serialize();
     sendChunk(clientSocket,serializedData);
 
@@ -214,7 +223,7 @@ void RequestSender::constructStocksRequest(){
     receiveChunks(clientSocket,serverFeedbackByteStream);
     serverFeedbackRequest.deserialize(serverFeedbackByteStream);
 
-    int stocks = serverFeedbackRequest.getNumericArgs()[0];
+    int stocks = serverFeedbackRequest.getNumericData()[0];
 
     std::cout << "you have " << stocks <<" stocks at your account ";
 };
@@ -227,7 +236,7 @@ void RequestSender::constructMessageRequest(){
     cin.getline(message,MAX_MSG_LENGTH-1);  
     cout << "\n";
 
-    request msgRequest(COMMUNICATION,MSG,{message});
+    request msgRequest(RequestCommand::MSG,{message},{});
     vector<uint8_t> serializedData=msgRequest.serialize();
 
     sendChunk(clientSocket,serializedData);
@@ -243,7 +252,7 @@ void RequestSender::constructLoginRequest(){
     cout << "Enter your password" << MAX_CREDENTIALS_LENGTH << " characters at most): " ;
     cin >> password;
 
-    request loginRequest(COMMUNICATION,LOGIN,{username,password},{});
+    request loginRequest(RequestCommand::LOGIN,{username,password},{});
     vector<uint8_t> serializedData=loginRequest.serialize();
 
     sendChunk(clientSocket,serializedData);
@@ -254,12 +263,12 @@ void RequestSender::constructLoginRequest(){
     receiveChunks(clientSocket,serverFeedbackByteStream);
     serverFeedbackRequest.deserialize(serverFeedbackByteStream);
     
-    if(serverFeedbackRequest.getMessageCommand()==LOGIN){
-        clientID = serverFeedbackRequest.getNumericArgs()[0];
+    if(serverFeedbackRequest.getCommand()==RequestCommand::LOGIN){
+        clientID = serverFeedbackRequest.getNumericData()[0];
         cout << clientID;
         return;
     }
-    cout << serverFeedbackRequest.getTextArgs()[0];
+    cout << serverFeedbackRequest.getTextData()[0];
 };
 
 void RequestSender::constructRegisterRequest(){
@@ -272,7 +281,7 @@ void RequestSender::constructRegisterRequest(){
     cout << "Enter your password" << MAX_CREDENTIALS_LENGTH << " characters at most): " ;
     cin >> password;
 
-    request loginRequest(COMMUNICATION,REGISTER,{username,password},{});
+    request loginRequest(RequestCommand::REGISTER,{username,password},{});
     vector<uint8_t> serializedData=loginRequest.serialize();
 
     sendChunk(clientSocket,serializedData);
@@ -282,7 +291,7 @@ void RequestSender::constructRegisterRequest(){
     vector<uint8_t> serverFeedbackByteStream;
     receiveChunks(clientSocket,serverFeedbackByteStream);
     serverFeedbackRequest.deserialize(serverFeedbackByteStream);
-    cout << serverFeedbackRequest.getTextArgs()[0];
+    cout << serverFeedbackRequest.getTextData()[0];
     
 }
 
@@ -292,7 +301,7 @@ void RequestSender::constructBalanceRequest(){
         std::cout << "Login required!\n";
         return ;
     }
-    request getBalanceRequest(COMMUNICATION,BALANCE,{},{clientID});
+    request getBalanceRequest(RequestCommand::BALANCE,{},{clientID});
     vector<uint8_t> serializedData=getBalanceRequest.serialize();
     sendChunk(clientSocket,serializedData);
 
@@ -301,8 +310,8 @@ void RequestSender::constructBalanceRequest(){
     vector<uint8_t> serverFeedbackByteStream;
     receiveChunks(clientSocket,serverFeedbackByteStream);
     serverFeedbackRequest.deserialize(serverFeedbackByteStream);
-    int dollars =  serverFeedbackRequest.getNumericArgs()[0];
-    int cents =  serverFeedbackRequest.getNumericArgs()[1];
+    int dollars =  serverFeedbackRequest.getNumericData()[0];
+    int cents =  serverFeedbackRequest.getNumericData()[1];
 
     cout << "you have " << dollars<< " dollars and " << cents << " cents in your account" << std::endl;
 }

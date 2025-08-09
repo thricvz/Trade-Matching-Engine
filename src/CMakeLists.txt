@@ -24,7 +24,6 @@ add_subdirectory(DataBase)
 add_subdirectory(DataBaseCommunication)
 add_subdirectory(DataTransferModule)
 add_subdirectory(OrderBook)
-add_subdirectory(refactored)
 
 add_executable(server server.cpp)
 add_executable(client client.cpp)
