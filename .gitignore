@@ -1,6 +1,6 @@
-build/*
-.idea/*
-.vscode/*
+**build/*
+**.idea/*
+**.vscode/*
 *.db
-notes
-Testing/*
+**notes
+**Testing/

@@ -86,7 +86,7 @@ void request::serialize_args(vector<uint8_t> &stream,std::vector<const char*> ar
         };
         //add the null terminator
         stream.push_back('\0');
-        currentString+=1;
+        currentStringLength+=1;
         stream.insert(stream.begin()+offsetStringLengthByte,currentStringLength);
     }
 };
