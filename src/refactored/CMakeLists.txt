@@ -16,5 +16,6 @@ endif()
 
 include_directories(DataTransferModule/include)
 add_subdirectory(DataTransferModule)
-add_subdirectory(client)
 
+add_subdirectory(client)
+add_subdirectory(server)

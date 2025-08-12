@@ -1,5 +1,5 @@
 #include "include/requestHandler.hpp"
-#include "requestCodes" ///codes for the actual command types 
+#include "RequestClassByteCodes.hpp"  
 
 RequestHandler::RequestHandler(int clientSocket_,DBCommunication *ptr,std::mutex* mtx_){
     clientSocket =  clientSocket_;
@@ -9,12 +9,12 @@ RequestHandler::RequestHandler(int clientSocket_,DBCommunication *ptr,std::mutex
 };
 
 void RequestHandler::createNewOrder(request& request){
-    int clientID = request.getNumericArgs()[0];
-    int type = request.getNumericArgs()[1];
-    int  side = request.getNumericArgs()[2];
-    int quantity =  request.getNumericArgs()[3];
-    int dollars = request.getNumericArgs()[4];
-    int cents = request.getNumericArgs()[5];
+    int clientID = request.getNumericData()[0];
+    int type = request.getNumericData()[1];
+    int  side = request.getNumericData()[2];
+    int quantity =  request.getNumericData()[3];
+    int dollars = request.getNumericData()[4];
+    int cents = request.getNumericData()[5];
 
     
     DBrequest newOrderRequest{threadId,OB_NEW_ORDER,{},{clientID,type,side,quantity,dollars,cents}};
@@ -132,7 +132,7 @@ void RequestHandler::constructBalanceRequest(int dollars,int cents){
 };
 
 void RequestHandler::getBalanceUser(request& request){
-    int userId  = request.getNumericArgs()[0];
+    int userId  = request.getNumericData()[0];
     if(userId==UNVALID_ID){
         constructInfoRequest("Wrong ID");
         return;
@@ -156,7 +156,7 @@ void RequestHandler::getBalanceUser(request& request){
 
 
 void RequestHandler::getStocksUser(request& stockCheckup){
-    int userId  = stockCheckup.getNumericArgs()[0];
+    int userId  = stockCheckup.getNumericData()[0];
     if(userId==UNVALID_ID){
         constructInfoRequest("Wrong ID");
         return;

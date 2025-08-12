@@ -1,5 +1,5 @@
 #pragma once
-
+#include <map>
 const int UNVALID_ID =-1;
 
 class RequestSender{

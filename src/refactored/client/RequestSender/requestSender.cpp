@@ -9,23 +9,7 @@
 #include "requestClass.hpp"
 #include "ChunkTransmission.hpp" 
 #include "RequestClassByteCodes.hpp" 
-
-
-//PLACEHOLDER for now
-//#include "OrderBookDataTypes.hpp" // a header file that contains the various data about an orderbook
-
-enum class OrderType : uint8_t
-{
-    MARKET,
-    LIMIT
-};
-
-enum class OrderSide : uint8_t
-{
-    SELL,
-    BUY
-};
-
+#include "orderTypes.hpp"
 using std::string_view;
 using std::map;
 using std::string;

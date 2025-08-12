@@ -1,8 +1,10 @@
 #include <vector>
 #include <mutex>
-#include "DataBaseCommunication.hpp"
-#include "DataBaseCommunicationCodes.hpp"
-#include "request" //placeholder for request class header file
+#include "requestClass.hpp"
+
+//place holder for dbCommunication
+struct dbCommunication;
+
 using std::vector; 
 
 class RequestHandler{

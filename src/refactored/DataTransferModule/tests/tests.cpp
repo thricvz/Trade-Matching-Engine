@@ -126,3 +126,18 @@ TEST(Serialization, BIGINTEGERS2){
     EXPECT_TRUE(requestRestore==unchangedRequest);
 
 }
+
+TEST(DataIntegrity,throwInexistingData){
+
+    request emptyRequest{};
+    EXPECT_THROW(emptyRequest.deserialize({}),std::runtime_error);
+
+}
+
+
+TEST(DataIntegrity,throwLostDataError){
+    request originalRequest(RequestCommand::MSG,{"hello world"},{12});
+    auto corruptedData =  originalRequest.serialize();
+    corruptedData.pop_back();
+    EXPECT_THROW(originalRequest.deserialize(corruptedData),std::invalid_argument);
+}

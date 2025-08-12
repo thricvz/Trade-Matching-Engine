@@ -113,7 +113,7 @@ void request::deserialize(vector<uint8_t> DataBytes){
     }
 
     if(DataBytes[RequestDataOffSet::packetSize]!=DataBytes.size()){
-        throw std::length_error("Data lost in Packet");
+        throw std::invalid_argument("Data lost in Packet");
     }
 
     this->command = static_cast<RequestCommand>(DataBytes[1]);
