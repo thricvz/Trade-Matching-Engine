@@ -2,15 +2,17 @@
 #include "DataBase.hpp"
 #include "DataBaseCommunicationCodes.hpp"
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+
 #include "InterThreadCommunication.hpp"
+#include "InterThreadCommunicationCodes.hpp"
 #include "requestHandler.hpp"
+#include <mutex>
 
-
-DBCommunication DataBaseCommunicationHandler;
-std::mutex mtx;
-
+extern std::mutex mtx;
 void handleRegistration(DataBase& db,DBCommunication &dbCommunication, DBrequest&request){
-    int code = db.registerUser(request.textArgs[0],request.textArgs[1]);
+    int code = db.registerUser(request.textData[0],request.textData[1]);
     DBresponse response{{},{},code};
     mtx.lock();
     dbCommunication.addResponse(request.threadId,response);
@@ -20,7 +22,7 @@ void handleRegistration(DataBase& db,DBCommunication &dbCommunication, DBrequest
 
 void handleLogin(DataBase& db,DBCommunication &dbCommunication, DBrequest&request){
 
-    int userId= db.getUserId(request.textArgs[0],request.textArgs[1]);
+    int userId= db.getUserId(request.textData[0],request.textData[1]);
     DBresponse response{{},{userId},userId};
     mtx.lock();
     dbCommunication.addResponse(request.threadId,response);
@@ -28,7 +30,7 @@ void handleLogin(DataBase& db,DBCommunication &dbCommunication, DBrequest&reques
 }
 
 void handleRetrieveBalanceData(DataBase& db,DBCommunication &dbCommunication, DBrequest&request){
-    int userId= request.numericArgs[0];
+    int userId= request.numericData[0];
     std::pair<int,int> userBalance= db.getUserBalance(userId);
 
     DBresponse response{{},{userBalance.first,userBalance.second}};
@@ -38,7 +40,7 @@ void handleRetrieveBalanceData(DataBase& db,DBCommunication &dbCommunication, DB
 };
 
 void handleRetrieveStockUserData(DataBase& db,DBCommunication &dbCommunication, DBrequest&request){
-    int userId= request.numericArgs[0];
+    int userId= request.numericData[0];
     int userStockHolding= db.getUserStockHolding(userId);
 
     DBresponse response{{},{userStockHolding}};
@@ -127,12 +129,12 @@ void registerOrderChanges(DataBase& db,std::pair<MatchesList,OrderFillState> mat
 };
 
 void handleNewOrder(OrderBook& orderbook,DataBase& db,DBCommunication &dbCommunication, DBrequest&request){
-    int clientID = request.numericArgs[0];
-    OrderType type = static_cast<OrderType>(request.numericArgs[1]);
-    OrderSide side = static_cast<OrderSide>(request.numericArgs[2]);
-    int quantity =  request.numericArgs[3];
-    int dollars = request.numericArgs[4];
-    int cents = request.numericArgs[5];
+    int clientID = request.numericData[0];
+    OrderType type = static_cast<OrderType>(request.numericData[1]);
+    OrderSide side = static_cast<OrderSide>(request.numericData[2]);
+    int quantity =  request.numericData[3];
+    int dollars = request.numericData[4];
+    int cents = request.numericData[5];
 
     Order *newOrder =new  Order(type,side,quantity,dollars,cents);
     newOrder->setId(OrderBook::genOrderId()); 

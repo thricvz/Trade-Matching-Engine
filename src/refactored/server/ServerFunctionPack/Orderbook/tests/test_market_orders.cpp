@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "orderbook.h"
+#include "orderbook.hpp"
 #define DEFAULT_OWNERID 0
 
 bool equalMatchesList(MatchesList input,MatchesList expected) {

@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "orderbook.h"
+#include "orderbook.hpp"
 #define DEFAULT_OWNERID 0 
 //IMPROVEMENTS FOR FUTURE VERSIONS
 //NO MAGIC NUMBERS IN THE TEST (ESPECIALLY IN THE ID FIELDS)
