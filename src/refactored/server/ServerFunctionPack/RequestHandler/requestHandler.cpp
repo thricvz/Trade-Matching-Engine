@@ -7,7 +7,7 @@
 #include <iostream>
 
 using std::cout;
-
+const int UNVALID_ID = -1;
 
 RequestHandler::RequestHandler(int clientSocket_,DBCommunication *ptr,std::mutex* mtx_){
     clientSocket =  clientSocket_;
