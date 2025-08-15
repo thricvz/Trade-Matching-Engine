@@ -1,9 +1,7 @@
 #include <vector>
 #include <mutex>
 #include "requestClass.hpp"
-
-//place holder for dbCommunication
-struct dbCommunication;
+#include "InterThreadCommunication.hpp"
 
 using std::vector; 
 

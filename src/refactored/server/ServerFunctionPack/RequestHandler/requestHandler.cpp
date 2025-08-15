@@ -1,5 +1,13 @@
 #include "include/requestHandler.hpp"
 #include "RequestClassByteCodes.hpp"  
+#include "ChunkTransmission.hpp"
+#include "InterThreadCommunicationCodes.hpp"
+#include "InterThreadCommunication.hpp"
+#include "DataBaseCommunicationCodes.hpp" 
+#include <iostream>
+
+using std::cout;
+
 
 RequestHandler::RequestHandler(int clientSocket_,DBCommunication *ptr,std::mutex* mtx_){
     clientSocket =  clientSocket_;
@@ -24,7 +32,7 @@ void RequestHandler::createNewOrder(request& request){
 
     
     DBresponse response = dbCommunication->waitResponse(threadId);
-    constructInfoRequest(response.textArgs[0].c_str());
+    constructInfoRequest(response.textData[0].c_str());
 };
 
 void RequestHandler::handleInput(){
@@ -39,25 +47,25 @@ void RequestHandler::handleInput(){
         request requestReceived;
         requestReceived.deserialize(serializedRequest);
 
-        switch(requestReceived.getMessageCommand()){
-            case END_STREAM:
+        switch(requestReceived.getCommand()){
+            case RequestCommand::END_STREAM:
                 endConnection();
                 break;
-            case MSG:
-                cout << requestReceived.getTextArgs()[0] << std::endl;
+            case RequestCommand::MSG:
+                cout << requestReceived.getTextData()[0] << std::endl;
                 break;
-            case REGISTER:
+            case RequestCommand::REGISTER:
                 registerNewUser(requestReceived);
                 break;
-            case LOGIN:
+            case RequestCommand::LOGIN:
                 loginUser(requestReceived);
                 break;
-            case BALANCE:
+            case RequestCommand::BALANCE:
                 getBalanceUser(requestReceived);
                 break;
-            case STOCKS:
+            case RequestCommand::STOCKS:
                 getStocksUser(requestReceived);
-            case ORDERBOOK_NEW_ORDER:
+            case RequestCommand::ORDERBOOK_NEW_ORDER:
                 createNewOrder(requestReceived);
                 break;
         }
@@ -70,8 +78,8 @@ void RequestHandler::endConnection(){
 }
 
 void RequestHandler::registerNewUser(request& registerRequest){
-    const char* username = registerRequest.getTextArgs()[0];
-    const char* password = registerRequest.getTextArgs()[1];
+    const char* username = registerRequest.getTextData()[0];
+    const char* password = registerRequest.getTextData()[1];
     //replace with our new structure
     DBrequest newUser{threadId,DB_REGISTER,{username,password},{}};
     std::mutex mtx;
@@ -90,8 +98,8 @@ void RequestHandler::registerNewUser(request& registerRequest){
 };
 
 void RequestHandler::loginUser(request &loginRequest){
-    const char* username = loginRequest.getTextArgs()[0];
-    const char* password = loginRequest.getTextArgs()[1];
+    const char* username = loginRequest.getTextData()[0];
+    const char* password = loginRequest.getTextData()[1];
     //replace with our new structure
     DBrequest loginUser{threadId,DB_LOGIN,{username,password},{}};
     std::mutex mtx;
@@ -106,7 +114,7 @@ void RequestHandler::loginUser(request &loginRequest){
     int code = requestResponse.errorCode;
 
     if(code!=USER_NOT_FOUND){
-        int userId = requestResponse.numericArgs[0];
+        int userId = requestResponse.numericData[0];
         constructIdRequest(userId);
     }else{
         constructInfoRequest("User not found: please re-enter password");
@@ -115,19 +123,19 @@ void RequestHandler::loginUser(request &loginRequest){
 }
 
 void RequestHandler::constructInfoRequest(const char* msg){
-    request infoRequest(COMMUNICATION,MSG,{msg});
+    request infoRequest(RequestCommand::MSG,{msg},{});
     sendChunk(clientSocket,infoRequest.serialize());
 };
 
 
 void  RequestHandler::constructIdRequest(int id){
-    request infoRequest(COMMUNICATION,LOGIN,{},{id});
+    request infoRequest(RequestCommand::LOGIN,{},{id});
     sendChunk(clientSocket,infoRequest.serialize());
 };
 
 
 void RequestHandler::constructBalanceRequest(int dollars,int cents){
-    request infoRequest(COMMUNICATION,BALANCE,{},{dollars,cents});
+    request infoRequest(RequestCommand::BALANCE,{},{dollars,cents});
     sendChunk(clientSocket,infoRequest.serialize());
 };
 
@@ -148,8 +156,8 @@ void RequestHandler::getBalanceUser(request& request){
     DBresponse requestResponse = dbCommunication->waitResponse(threadId);
     mtx.unlock();
 
-    int BalanceDollars= requestResponse.numericArgs[0];
-    int BalanceCents = requestResponse.numericArgs[1];
+    int BalanceDollars= requestResponse.numericData[0];
+    int BalanceCents = requestResponse.numericData[1];
 
     constructBalanceRequest(BalanceDollars,BalanceCents);
 };
@@ -172,7 +180,7 @@ void RequestHandler::getStocksUser(request& stockCheckup){
     DBresponse requestResponse = dbCommunication->waitResponse(threadId);
     mtx.unlock();
 
-    const int stockAmount = requestResponse.numericArgs[0];
+    const int stockAmount = requestResponse.numericData[0];
     
     constexpr int empty_field = 0;
     constructBalanceRequest(stockAmount,empty_field);

@@ -1,12 +1,9 @@
 
 
-add_subdirectory(Orderbook)
-add_subdirectory(RequestHandler)
 
-
-include_directories(Orderbook/include)
-include_directories(RequestHandler/include)
+include_directories(ServerFunctionPack/include)
+add_subdirectory(ServerFunctionPack)
 
 
 add_executable(server server.cpp)
-target_link_libraries(server OrderbookModule RequestHandlerModule)
+target_link_libraries(server ServerFunctionPack)

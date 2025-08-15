@@ -1,0 +1,14 @@
+
+
+include_directories(Orderbook/include)
+include_directories(DataBase/include)
+include_directories(InterThreadCommunicationModule/include)
+include_directories(RequestHandler/include)
+
+add_subdirectory(InterThreadCommunicationModule)
+add_subdirectory(RequestHandler)
+add_subdirectory(Orderbook)
+add_subdirectory(DataBase)
+
+add_library(ServerFunctionPack FunctionPack.cpp)
+target_link_libraries(ServerFunctionPack OrderbookModule RequestHandlerModule DataBaseModule)

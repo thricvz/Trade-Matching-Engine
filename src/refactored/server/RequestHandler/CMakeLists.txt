@@ -1,3 +1,0 @@
-
-add_library(RequestHandlerModule requestHandler.cpp)
-target_link_libraries(RequestHandlerModule RequestModule ChunkTransmissionModule DBCommunicationModule)

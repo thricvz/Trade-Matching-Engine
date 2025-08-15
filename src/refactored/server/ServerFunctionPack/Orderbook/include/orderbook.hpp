@@ -3,8 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <chrono>
-#include <quicksort.h>
-#include "orderTypes.h"
+#include "orderTypes.hpp"
 
 class Price{
     public:
