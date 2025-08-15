@@ -1,15 +1,31 @@
-#include "byteCodes.h"
-#include "requestClass.h"
+#include "requestClass.hpp"
 #include <gtest/gtest.h>
+
+TEST(MemberFunction,Equality){
+    RequestCommand msgCommand = RequestCommand::BALANCE;
+
+    char w1[] = "THEY SHould be equal now";
+    char w2[] = "shein";
+    std::vector<const char*> textArgs = {w1,w2};
+    std::vector<int32_t> numericArgs = {32,45,65};
+
+
+
+
+    request request1(msgCommand,textArgs,numericArgs);
+    request unchangedRequest(msgCommand,textArgs,numericArgs);
+    EXPECT_TRUE(request1==unchangedRequest);
+
+}
+
 
 TEST(Serialization, IntegerArguments){
     
-    uint8_t msgCommand = 88;
-    uint8_t msgType = 45;
+    RequestCommand msgCommand = RequestCommand::MSG;
     std::vector<int32_t> args = {32,45,65};
 
-    request requestToSerialize(msgCommand,msgType,args);
-    request unchangedRequest(msgCommand,msgType,args);
+    request requestToSerialize(msgCommand,{},args);
+    request unchangedRequest(msgCommand,{},args);
 
     std::vector<uint8_t> byteStream = requestToSerialize.serialize();
     request requestRestore;
@@ -22,16 +38,15 @@ TEST(Serialization, IntegerArguments){
 
 TEST(Serialization, TextArguments){
     
-    uint8_t msgCommand = 88;
-    uint8_t msgType = 45;
+    RequestCommand msgCommand = RequestCommand::BALANCE;
 
     char w1[] = "hahaha";
     char w2[] = "shein";
     char w3[] = "worldwide";
     std::vector<const char*> args = {w1,w2,w3};
 
-    request requestToSerialize(msgCommand,msgType,args);
-    request unchangedRequest(msgCommand,msgType,args);
+    request requestToSerialize(msgCommand,args,{});
+    request unchangedRequest(msgCommand,args,{});
 
     std::vector<uint8_t> byteStream = requestToSerialize.serialize();
     request requestRestore;
@@ -44,9 +59,7 @@ TEST(Serialization, TextArguments){
 
 TEST(Serialization, FullRequest){
     
-    uint8_t msgCommand = 88;
-    uint8_t msgType = 45;
-
+    RequestCommand msgCommand = RequestCommand::BALANCE;
     char w1[] = "sve";
     char w2[] = "the ";
     char w3[] = "woworrldwide";
@@ -55,8 +68,8 @@ TEST(Serialization, FullRequest){
     std::vector<const char*> args = {w1,w2,w3};
     std::vector<int32_t> numericArgs = {32,45,65};
 
-    request requestToSerialize(msgCommand,msgType,args,numericArgs);
-    request unchangedRequest(msgCommand,msgType,args,numericArgs);
+    request requestToSerialize(msgCommand,args,numericArgs);
+    request unchangedRequest(msgCommand,args,numericArgs);
 
     std::vector<uint8_t> byteStream = requestToSerialize.serialize();
     request requestRestore;
@@ -69,19 +82,18 @@ TEST(Serialization, FullRequest){
 
 TEST(Serialization2, BIGINTEGERS){
     
-    uint8_t msgCommand = 88;
-    uint8_t msgType = 45;
+    RequestCommand msgCommand = RequestCommand::BALANCE;
 
     char w1[] = "sve";
     char w2[] = "the ";
-    char w3[] = "woworrldwide";
+    char w3[] = "absolute batman is very good";
     char w4[] = "ffldl";
 
     std::vector<const char*> args = {w1,w2,w3};
     std::vector<int32_t> numericArgs = {32,500,65};
 
-    request requestToSerialize(msgCommand,msgType,args,numericArgs);
-    request unchangedRequest(msgCommand,msgType,args,numericArgs);
+    request requestToSerialize(msgCommand,args,numericArgs);
+    request unchangedRequest(msgCommand,args,numericArgs);
 
     std::vector<uint8_t> byteStream = requestToSerialize.serialize();
     request requestRestore;
@@ -93,19 +105,19 @@ TEST(Serialization2, BIGINTEGERS){
 
 TEST(Serialization, BIGINTEGERS2){
     
-    uint8_t msgCommand = 88;
-    uint8_t msgType = 45;
+    RequestCommand msgCommand = RequestCommand::BALANCE;
 
     char w1[] = "sve";
-    char w2[] = "the ";
-    char w3[] = "woworrldwide";
-    char w4[] = "ffldl";
+    char w2[] = "some randoom thing ";
+    char w3[] = "fifia";
+    char w4[] = "i hope this works i guess my varlehi";
 
     std::vector<const char*> args = {w1,w2,w3};
     std::vector<int32_t> numericArgs = {13000,0,65};
 
-    request requestToSerialize(msgCommand,msgType,args,numericArgs);
-    request unchangedRequest(msgCommand,msgType,args,numericArgs);
+
+    request requestToSerialize(msgCommand,args,numericArgs);
+    request unchangedRequest(msgCommand,args,numericArgs);
 
     std::vector<uint8_t> byteStream = requestToSerialize.serialize();
     request requestRestore;
@@ -113,4 +125,19 @@ TEST(Serialization, BIGINTEGERS2){
 
     EXPECT_TRUE(requestRestore==unchangedRequest);
 
+}
+
+TEST(DataIntegrity,throwInexistingData){
+
+    request emptyRequest{};
+    EXPECT_THROW(emptyRequest.deserialize({}),std::runtime_error);
+
+}
+
+
+TEST(DataIntegrity,throwLostDataError){
+    request originalRequest(RequestCommand::MSG,{"hello world"},{12});
+    auto corruptedData =  originalRequest.serialize();
+    corruptedData.pop_back();
+    EXPECT_THROW(originalRequest.deserialize(corruptedData),std::invalid_argument);
 }

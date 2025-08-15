@@ -1,3 +1,0 @@
-UPDATE Users
-SET stocks= @stocksAmount
-WHERE id = @id;

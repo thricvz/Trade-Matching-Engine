@@ -1,3 +1,0 @@
-UPDATE Users
-SET dollars = @dollarsAmount,cents = @centsAmount
-WHERE id = @id;

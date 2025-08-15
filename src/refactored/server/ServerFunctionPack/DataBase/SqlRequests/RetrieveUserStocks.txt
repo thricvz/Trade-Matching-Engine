@@ -1,1 +1,0 @@
-SELECT stocks FROM Users WHERE id ='@id';
