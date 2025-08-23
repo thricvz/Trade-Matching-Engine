@@ -5,6 +5,9 @@
 #include <map>
 #include "DataBaseCommunicationCodes.hpp"
 
+//modify to use relative path (I'm aware that this is a very poor practice,Will be corrected in the future)
+#define DIR_PATH "/home/eric/Projects/Server/src/server/ServerFunctionPack/DataBase/SqlRequests/"
+
 using std::string;
 using std::map;
 //register codes

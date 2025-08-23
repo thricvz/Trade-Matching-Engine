@@ -5,9 +5,6 @@
 
 
 
-//needs to be changed
-#define DIR_PATH "/home/eric/Projects/Server/"
-
 //Callback Functions
 static int UserFoundCallback(void *returnVal, int count, char **data, char **columns)
 {
@@ -86,7 +83,7 @@ int DataBase::registerUser(string username, string password){
 };
 
 void DataBase::loadScript(string scriptName,string &requestBuffer){
-    scriptName = std::string(DIR_PATH) + "/src/DataBase/SqlRequests/" + scriptName;
+    scriptName = std::string(DIR_PATH) + scriptName;
     std::ifstream script(scriptName.c_str());
     string line;
 
@@ -96,7 +93,7 @@ void DataBase::loadScript(string scriptName,string &requestBuffer){
 };
 
 void DataBase::loadScript(string scriptName,string &requestBuffer, map<string,string> &tags){
-    scriptName = std::string(DIR_PATH) + "/src/DataBase/SqlRequests/" + scriptName;
+    scriptName = std::string(DIR_PATH) + scriptName;
     std::ifstream script(scriptName.c_str());
     string line;
     
