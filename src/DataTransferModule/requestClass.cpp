@@ -1,169 +1,187 @@
-#include "requestClass.h"
-#include "byteCodes.h"
+#include "requestClass.hpp"
+#include <sys/socket.h>
 #include <cstring>
+#include <string.h>
+#include <stdexcept>
 
 using std::vector;
 const int32_t BYTE_EXTRACT = 0b11111111;
 
+enum RequestDataType :uint8_t{
+    INTEGER,
+    STRING,
+    LIST
+};
+enum RequestDataOffSet : int{
+    packetSize = 0,
+    command = 1
+};
 
-request::request(){
-    messageType = 0;
-    messageCommand = 0;
-    textArgs = vector<const char*>(0);
-    numericArgs = vector<int32_t>(0);
+
+request::request(RequestCommand command,vector<const char*> textArgs,vector<int32_t> numericArgs){
+    this->command = command;
+    numericData = numericArgs;
+    
+    
+    for(auto string:textArgs){
+        int stringLength = strlen(string);
+        char * stringCopy=  new char[stringLength];
+        strcpy(stringCopy,string);
+
+        textData.push_back(stringCopy);
+    }
+
 };
-request::request(uint8_t messageType_,uint8_t messageCommand_,vector<int32_t> args_){
-    messageType = messageType_;
-    messageCommand = messageCommand_;
-    textArgs = vector<const char*>(0);
-    numericArgs = args_;
-};
-request::request(uint8_t messageType_,uint8_t messageCommand_,vector<const char*> args_){
-    messageType = messageType_;
-    messageCommand = messageCommand_;
-    textArgs = args_;
-    numericArgs = vector<int32_t>(0);
-};
-request::request(uint8_t messageType_,uint8_t messageCommand_,vector<const char*> textargs_,vector<int32_t> numericargs_){
-    messageType = messageType_;
-    messageCommand = messageCommand_;
-    textArgs = textargs_;
-    numericArgs = numericargs_;
-};
+
+
+request::~request(){
+    for(auto allocatedString : textData){
+        delete[] allocatedString;
+    }
+    textData.clear();
+    numericData.clear();
+}
 
 vector<uint8_t> request::serialize(){
-    vector<uint8_t> encoded_data;
-    encoded_data.push_back(0); //placeholder for future size element
-    encoded_data.push_back(messageType);
-    encoded_data.push_back(messageCommand);
+    vector<uint8_t> encoded_data(2);
 
-    //now serialize the arguments
-    serialize_args(encoded_data,textArgs);
-    serialize_args(encoded_data,numericArgs);
-    encoded_data[0] = encoded_data.size();
+    encoded_data[RequestDataOffSet::packetSize] == 0;
+    encoded_data[RequestDataOffSet::command] = static_cast<uint8_t>(command);
+
+    serialize_args(encoded_data,textData);
+    serialize_args(encoded_data,numericData);
+
+    uint8_t dataStreamSize = encoded_data.size();
+    encoded_data[RequestDataOffSet::packetSize] = dataStreamSize;
+    
     return encoded_data;
 };
 
-vector<const char*> request::getTextArgs(){
-    return textArgs;
+vector<const char*> request::getTextData() const {
+    return textData;
 };
-vector<int32_t> request::getNumericArgs(){
-    return numericArgs;
+vector<int32_t> request::getNumericData() const{
+    return numericData;
 };
-uint8_t request::getMessageCommand(){
-    return messageCommand;
-};
-uint8_t request::getMessageType(){
-    return messageType;
+
+
+RequestCommand request::getCommand() const{
+    return command;
 };
 
 void request::serialize_args(vector<uint8_t> &stream,std::vector<const char*> args_){
-    stream.push_back(LIST);
-    stream.push_back(STRING);
+    stream.push_back(RequestDataType::LIST);
+    stream.push_back(RequestDataType::STRING);
     stream.push_back(args_.size());
 
-    for(int i =0;i<args_.size();i++){
-        const char *currentString = args_[i];
-        int indexStringSize = stream.size();
-        uint8_t stringSize = 0;
+    for(auto currentString :args_){
+        int offsetStringLengthByte = stream.size();
+        uint8_t currentStringLength = 0;
 
         while(*currentString){
             stream.push_back(*currentString);
             currentString++;
-            stringSize++;
+            currentStringLength++;
+            
         };
+        //add the null terminator
         stream.push_back('\0');
-        stream.insert(stream.begin()+indexStringSize,stringSize+1);
+        currentStringLength+=1;
+        stream.insert(stream.begin()+offsetStringLengthByte,currentStringLength);
     }
 };
 
 void request::serialize_args(vector<uint8_t> &stream,std::vector<int32_t> args_){
-    stream.push_back(LIST);
-    //List information: type of data and total size
-    stream.push_back(INTEGER);
+    stream.push_back(RequestDataType::LIST);
+    stream.push_back(RequestDataType::INTEGER);
     stream.push_back(args_.size());
     
-    for(int i =0;i<args_.size();i++){
-        std::uint32_t currentInteger = args_[i];
-
+    for(auto currentInteger : args_){
         for(int offset=3;offset>=0;offset--){
-            //extract current byte
             std::uint32_t valueExtracted = currentInteger & (BYTE_EXTRACT<<(offset*8));
             std::uint8_t currentByte =  (valueExtracted>>(offset*8));
+
             stream.push_back(currentByte);
         }
     }
 };
 
 void request::deserialize(vector<uint8_t> DataBytes){
-    //check that no data is missing
-    if(DataBytes[0]!=DataBytes.size())
-        return;
+    //Checking Data Integrity
+    if(DataBytes.empty()){
+        throw std::runtime_error("No Data available to deserialize");
+    }
 
-    this->messageType = DataBytes[1];
-    this->messageCommand = DataBytes[2];
+    if(DataBytes[RequestDataOffSet::packetSize]!=DataBytes.size()){
+        throw std::invalid_argument("Data lost in Packet");
+    }
+
+    this->command = static_cast<RequestCommand>(DataBytes[1]);
 
     //read list data from the stream of data
-    int currentByteIndex = 3;
-    while(currentByteIndex < DataBytes.size()){
-        //jump list indicator
-        uint8_t listType = DataBytes[++currentByteIndex];
+    int currentByteIndex = 2;
+    while(currentByteIndex < DataBytes[RequestDataOffSet::packetSize]){
+
+        RequestDataType listType = static_cast<RequestDataType>(DataBytes[++currentByteIndex]);
         uint8_t listSize = DataBytes[++currentByteIndex];
-        //if list is empty just jump to the other list
+
         if(listSize==0){
             currentByteIndex++;
             continue;
+
         }
-        //for supporting multiple types later
+
         currentByteIndex++;
         switch(listType){
-            case INTEGER:
+            case RequestDataType::INTEGER:
                 deserializeIntegerList(DataBytes,listSize,currentByteIndex);
                 break;
             
-            case STRING:
+            case RequestDataType::STRING:
                 deserializeStringList(DataBytes,listSize,currentByteIndex);
                 break;
         }
     }
 };
 
-bool request::operator==(request const &lhs){
-    if(this->messageCommand != lhs.messageCommand)
-        return false;
-    if(this->messageType != lhs.messageType)
+bool request::operator==(request const &lhs) const{
+    
+    if(command != lhs.command)
         return false;
     
-    if(this->textArgs.size()!= lhs.textArgs.size())
+    if((textData.size()!=lhs.textData.size()) || (numericData.size()!=lhs.numericData.size()) )
         return false;
+       
 
-    if(this->numericArgs.size()!= lhs.numericArgs.size())
-        return false;
-        
-    //check for test Args list equality
-    for(int i=0;i<textArgs.size();i++){
-        if(strcmp(textArgs[i],lhs.textArgs[i])!=0)
+    int lhsIndex{0};
+    for(auto data : numericData){
+        if(data!=lhs.numericData[lhsIndex])
             return false;
+        lhsIndex++;
     }
 
-    for(int i=0;i<numericArgs.size();i++){
-        if(numericArgs[i]!=lhs.numericArgs[i])
+
+    lhsIndex=0;
+    for(auto data : textData){
+        if(strcmp(data,lhs.getTextData()[lhsIndex]))
             return false;
+        lhsIndex++;
     }
+
     return true;
 };
 
 
 void request::deserializeIntegerList(vector<uint8_t> &data,int listSize,int &listIndex){
     while(listSize>0){
-        //construct the 32 bit integer
         int32_t argument = data[listIndex];
         for(int bytesLeft = 3;bytesLeft >0;bytesLeft--){
             listIndex++;
             argument <<=8;
             argument |= data[listIndex];
         }
-        numericArgs.push_back(argument);
+        numericData.push_back(argument);
+        
         //prepare for the next integer
         listIndex++;
         listSize--;
@@ -172,13 +190,13 @@ void request::deserializeIntegerList(vector<uint8_t> &data,int listSize,int &lis
 void request::deserializeStringList(vector<uint8_t> &data,int listSize,int &listIndex){
     while(listSize>0){
         int stringSize = data[listIndex];
-        char* currentString = new char[stringSize];
+        char* currentString = new char[stringSize]; //space for the
 
         for(int i=0;i<stringSize;i++){
             listIndex++;
             *(currentString+i) = data[listIndex];
         }
-        textArgs.push_back(currentString);
+        textData.push_back(currentString);
         listIndex++;
         listSize--;
     }
