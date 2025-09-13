@@ -116,13 +116,13 @@ void registerOrderChanges(DataBase& db,std::pair<MatchesList,OrderFillState> mat
     }
 
     if(fillstate!=OrderFillState::NOFILL){
-        OrderMatch originalOrder(
-            order->ownerID,
+        OrderMatch originalOrder{
             order->id,
+            order->ownerID,
             matchTotalQuantity,
             {matchTotalWorth/100,matchTotalWorth%100},
             fillstate
-        );
+        };
         updateUserEntry(db,originalOrder,order->side);
     }
 
@@ -136,7 +136,7 @@ void handleNewOrder(OrderBook& orderbook,DataBase& db,DBCommunication &dbCommuni
     int dollars = request.numericData[4];
     int cents = request.numericData[5];
 
-    Order *newOrder =new  Order(type,side,quantity,dollars,cents);
+    Order *newOrder =new  Order(type,side,quantity,{dollars,cents},OrderBook::genOrderId());
     newOrder->setId(OrderBook::genOrderId()); 
     newOrder->setOwnerId(clientID);
     

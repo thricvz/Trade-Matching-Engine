@@ -1,232 +1,230 @@
 #include <gtest/gtest.h>
 #include "orderbook.hpp"
-#define DEFAULT_OWNERID 0
+#include "testFunctions/AdditionalTestFunctions.hpp"
 
-bool equalMatchesList(MatchesList input,MatchesList expected) {
-    if (input.matches.size() != expected.matches.size()) {
-        return false;
-    }
-    int valuesFound=0;
-    for (auto value:expected.matches) {
-        for (int i=0; i<input.matches.size(); i++) {
-            if (input.matches[i] == value) {
-                valuesFound++;
-                input.matches.erase(input.matches.begin()+i);
-            }
-        }
+TEST(BUY_MARKET_ORDER, CANT_MATCH_MARKET) {
+	int sellOrder1ID = 1;
+	int sellOrder2ID = 2;
+	int sellOrder3ID = 3;
 
-    }
-    return valuesFound==expected.matches.size();
+	Price sellPrice{0,0};	
+	PriceLevel* sellPriceLevel = createPriceLevel(OrderType::MARKET,OrderSide::SELL,sellPrice,
+	{
+		{87,sellOrder1ID},
+		{9,sellOrder2ID},
+		{2,sellOrder3ID}
+	});	
+
+
+	int buyOrderID = 44;	
+	Order *buyOrder  = new Order(OrderType::MARKET,OrderSide::BUY,44,buyOrderID); 		
+   	
+	Fifo fifoAlgorithm;
+	auto matchResult = createOrderBookAndMatch(buyOrder,{sellPriceLevel},&fifoAlgorithm);	
+
+	EXPECT_EQ(std::get<ORDER_STATE>(matchResult),OrderFillState::NOFILL);
+	EXPECT_TRUE(std::get<MATCHED_ORDERS_LIST>(matchResult).noMatchesMade());
 }
-
-TEST(BUY_MARKET_ORDER, NO_MATCHES) {
-    Price Level1Price(890,2);
-
-
-    Order *buyOrder = new Order(MARKET,BUY,10);
-
-
-    MatchesList expectedResult;
-
-    Fifo MatchingAlgorithm;
-    OrderBook OrderBook_(&MatchingAlgorithm);
-    OrderBook_.chargeTestOrders({},{});
-
-    std::pair<MatchesList,OrderFillState> MatchReturn = OrderBook_.matchBuyMarket(buyOrder);
-    EXPECT_EQ(std::get<1>(MatchReturn),OrderFillState::NOFILL);
-    EXPECT_TRUE(equalMatchesList(std::get<0>(MatchReturn),expectedResult));
-}
-
 
 
 
 TEST(BUY_MARKET_ORDER,FULL_MATCH){
+	int sellOrder1ID = 1;
+	int sellOrder2ID = 2;
+	int sellOrder3ID = 3;
+	int sellOrder4ID = 4;
 
-    Price Level1Price(890,2);
-    PriceLevel * PriceLevel1 = new PriceLevel(Level1Price);
+	Price sellPrice1{40,4};
+	PriceLevel* sellPriceLevel1 = createPriceLevel(OrderType::LIMIT,OrderSide::SELL,sellPrice1,
+	{
+		{8,sellOrder1ID},
+	});	
 
-    Order *order1 = new Order(MARKET,SELL,20,Level1Price.dollars,Level1Price.cents);
-    order1->setId(1);
+	Price sellPrice2{3,0};
+	PriceLevel* sellPriceLevel2 = createPriceLevel(OrderType::LIMIT,OrderSide::SELL,sellPrice2,
+	{
+		{4,sellOrder2ID},
+	});	
 
-    PriceLevel1->add_order(order1);
-
-
-    //Building second pricelevel
-    Price Level2Price(50,2);
-    PriceLevel * PriceLevel2 = new PriceLevel(Level2Price);
-
-    Order *order2 = new Order(MARKET,SELL,8,Level2Price.dollars,Level2Price.cents);
-    order2->setId(2);
-
-    PriceLevel2->add_order(order2);
+	Price sellPrice3{100,67};
+	PriceLevel* sellPriceLevel3 = createPriceLevel(OrderType::LIMIT,OrderSide::SELL,sellPrice3,
+	{
+		{2,sellOrder3ID},
+		{1,sellOrder4ID},
+	});	
 
 
-    Order *buyOrder = new Order(LIMIT,BUY,22,0,0);
+	int buyOrderID = 34;	
+	Order *buyOrder  = new Order(OrderType::MARKET,OrderSide::BUY,15,buyOrderID); 		
+   	
+	Fifo fifoAlgorithm;
+	auto matchResult = createOrderBookAndMatch(buyOrder,{sellPriceLevel1,
+	sellPriceLevel2,sellPriceLevel3},&fifoAlgorithm);	
+	auto resultMatchesList = std::get<MATCHED_ORDERS_LIST>(matchResult); 	
 
-    MatchesList expectedResult;
+	auto expectedMatchesList = MatchesList{{
+		OrderMatch{sellOrder1ID,DEFAULT_OWNERID,8,sellPrice1,OrderFillState::FULL},
+		OrderMatch{sellOrder2ID,DEFAULT_OWNERID,4,sellPrice2,OrderFillState::FULL},
+		OrderMatch{sellOrder3ID,DEFAULT_OWNERID,2,sellPrice3,OrderFillState::FULL},
+		OrderMatch{sellOrder4ID,DEFAULT_OWNERID,1,sellPrice3,OrderFillState::FULL}
+	}}; 
 
-    OrderMatch match1(DEFAULT_OWNERID,2,8,Level2Price,FULL);
-    OrderMatch match2(DEFAULT_OWNERID,1,14,Level1Price,PARTIAL);
-
-    expectedResult.addMatch(match1);
-    expectedResult.addMatch(match2);
-
-    Fifo MatchingAlgorithm;
-    OrderBook OrderBook_(&MatchingAlgorithm);
-    OrderBook_.chargeTestOrders({},{PriceLevel1,PriceLevel2});
-
-    std::pair<MatchesList,OrderFillState> MatchReturn = OrderBook_.matchBuyMarket(buyOrder);
-    EXPECT_EQ(std::get<1>(MatchReturn),FULL);
-    EXPECT_TRUE(equalMatchesList(std::get<0>(MatchReturn),expectedResult));
+	
+	EXPECT_EQ(std::get<ORDER_STATE>(matchResult),OrderFillState::FULL);
+	EXPECT_TRUE(MatchesListAreEqual(resultMatchesList,expectedMatchesList));
 }
 
 TEST(BUY_MARKET_ORDER,PARTIAL_MATCH){
+	int sellOrder1ID = 1;
+	int sellOrder2ID = 2;
 
-    Price Level1Price(890,2);
-    PriceLevel * PriceLevel1 = new PriceLevel(Level1Price);
+	Price sellPrice1{344,75};
+	PriceLevel* sellPriceLevel1 = createPriceLevel(OrderType::LIMIT,OrderSide::SELL,sellPrice1,
+	{
+		{70,sellOrder1ID},
+	});	
 
-    Order *order1 = new Order(MARKET,SELL,10,Level1Price.dollars,Level1Price.cents);
-    order1->setId(1);
-
-    PriceLevel1->add_order(order1);
-
-
-    //Building second pricelevel
-    Price Level2Price(50,2);
-    PriceLevel * PriceLevel2 = new PriceLevel(Level2Price);
-
-
-    Order *order2 = new Order(MARKET,SELL,8,Level2Price.dollars,Level2Price.cents);
-    order2->setId(2);
-
-    PriceLevel2->add_order(order2);
+	Price sellPrice2{200,0};
+	PriceLevel* sellPriceLevel2 = createPriceLevel(OrderType::LIMIT,OrderSide::SELL,sellPrice2,
+	{
+		{530,sellOrder2ID},
+	});	
 
 
-    Order *buyOrder= new Order(LIMIT,BUY,22,0,0);
 
-    MatchesList expectedResult;
+	int buyOrderID = 53;	
+	Order *buyOrder  = new Order(OrderType::MARKET,OrderSide::BUY,700,buyOrderID); 		
+   	
+	Fifo fifoAlgorithm;
+	auto matchResult = createOrderBookAndMatch(buyOrder,{sellPriceLevel1,
+	sellPriceLevel2},&fifoAlgorithm);	
+	auto resultMatchesList = std::get<MATCHED_ORDERS_LIST>(matchResult); 	
 
-    OrderMatch match1(DEFAULT_OWNERID,2,8,Level2Price,FULL);
-    OrderMatch match2(DEFAULT_OWNERID,1,10,Level1Price,FULL);
+	auto expectedMatchesList = MatchesList{{
+		OrderMatch{sellOrder2ID,DEFAULT_OWNERID,530,sellPrice2,OrderFillState::FULL},
+		OrderMatch{sellOrder1ID,DEFAULT_OWNERID,70,sellPrice1,OrderFillState::FULL},
+	}}; 
 
-    expectedResult.addMatch(match1);
-    expectedResult.addMatch(match2);
-
-    Fifo MatchingAlgorithm;
-    OrderBook OrderBook_(&MatchingAlgorithm);
-    OrderBook_.chargeTestOrders({},{PriceLevel1,PriceLevel2});
-
-    std::pair<MatchesList,OrderFillState> MatchReturn = OrderBook_.matchBuyMarket(buyOrder);
-    EXPECT_EQ(std::get<1>(MatchReturn),PARTIAL);
-    EXPECT_TRUE(equalMatchesList(std::get<0>(MatchReturn),expectedResult));
+	
+	EXPECT_EQ(std::get<ORDER_STATE>(matchResult),OrderFillState::PARTIAL);
+	EXPECT_TRUE(MatchesListAreEqual(resultMatchesList,expectedMatchesList));
 }
 
 
 
 
-// sell orders list
 TEST(SELL_MARKET_ORDER,NO_MATCHES) {
-    Price Level1Price (890,2);
+	int buyOrder1ID = 1;
+	int buyOrder2ID = 2;
+	int buyOrder3ID = 3;
+
+	Price buyPrice{0,0};	
+	PriceLevel* buyPriceLevel = createPriceLevel(OrderType::MARKET,OrderSide::BUY,buyPrice,
+	{
+		{450,buyOrder1ID},
+		{49,buyOrder2ID},
+		{2342,buyOrder3ID}
+	});	
 
 
-    Order *sellOrder= new Order(MARKET,SELL,10);
+	int sellOrderID = 44;	
+	Order *sellOrder  = new Order(OrderType::MARKET,OrderSide::SELL,200,sellOrderID); 		
+   	
+	Fifo fifoAlgorithm;
+	auto matchResult = createOrderBookAndMatch(sellOrder,{buyPriceLevel},&fifoAlgorithm);	
 
-
-    MatchesList expectedResult;
-
-    Fifo MatchingAlgorithm;
-    OrderBook OrderBook_(&MatchingAlgorithm);
-    OrderBook_.chargeTestOrders({},{});
-
-    std::pair<MatchesList,OrderFillState> MatchReturn = OrderBook_.matchSellMarket(sellOrder);
-    EXPECT_EQ(std::get<1>(MatchReturn),OrderFillState::NOFILL);
-    EXPECT_TRUE(equalMatchesList(std::get<0>(MatchReturn),expectedResult));
+	EXPECT_EQ(std::get<ORDER_STATE>(matchResult),OrderFillState::NOFILL);
+	EXPECT_TRUE(std::get<MATCHED_ORDERS_LIST>(matchResult).noMatchesMade());
 }
 
 
-//correct tests
 TEST(SELL_MARKET_ORDER,FULL_MATCH){
-
-    Price Level1Price(200,2);
-    PriceLevel *PriceLevel1 = new PriceLevel(Level1Price);
-
-    Order *order1=new Order(MARKET,BUY,10,Level1Price.dollars,Level1Price.cents);
-    order1->setId(1);
-
-    PriceLevel1->add_order(order1);
+	int buyOrder1ID = 1;
+	int buyOrder2ID = 2;
+	int buyOrder3ID = 3;
+	int buyOrder4ID = 4;
+	int buyOrder5ID = 5;
 
 
-    //Building second pricelevel
-    Price Level2Price(50,2);
-    PriceLevel *PriceLevel2=new PriceLevel(Level2Price);
+	Price buyPrice1{55,0};
+	PriceLevel* buyPriceLevel1 = createPriceLevel(OrderType::LIMIT,OrderSide::BUY,buyPrice1,
+	{
+		{80,buyOrder1ID},
+	});	
 
-    Order *order2=new Order(MARKET,BUY,12,Level2Price.dollars,Level2Price.cents);
-    order2->setId(2);
+	Price buyPrice2{65,0};
+	PriceLevel* buyPriceLevel2 = createPriceLevel(OrderType::LIMIT,OrderSide::BUY,buyPrice2,
+	{
+		{10,buyOrder2ID},
+	});	
 
-    PriceLevel2->add_order(order2);
+	Price buyPrice3{89,0};
+	PriceLevel* buyPriceLevel3 = createPriceLevel(OrderType::LIMIT,OrderSide::BUY,buyPrice3,
+	{
+		{10,buyOrder3ID},
+	});	
 
+	Price buyPrice4{120,80};
+	PriceLevel* buyPriceLevel4 = createPriceLevel(OrderType::LIMIT,OrderSide::BUY,buyPrice4,
+	{
+		{9,buyOrder4ID},
+		{25,buyOrder5ID},
+	});	
 
-    Order *sellOrder=new Order(LIMIT,SELL,22,0,0);
+	int sellOrderID = 404;	
 
-    MatchesList expectedResult;
+	Order *sellOrder  = new Order(OrderType::MARKET,OrderSide::SELL,43,sellOrderID); 		
+   	
+	Fifo fifoAlgorithm;
+	auto matchResult = createOrderBookAndMatch(sellOrder,{buyPriceLevel1,
+	buyPriceLevel2,buyPriceLevel3,buyPriceLevel4},&fifoAlgorithm);	
 
-    OrderMatch match1(DEFAULT_OWNERID,2,12,Level2Price,FULL);
-    OrderMatch match2(DEFAULT_OWNERID,1,10,Level1Price,FULL);
+	auto resultMatchesList = std::get<MATCHED_ORDERS_LIST>(matchResult); 	
 
-    expectedResult.addMatch(match1);
-    expectedResult.addMatch(match2);
+	auto expectedMatchesList = MatchesList{{
+		OrderMatch{buyOrder4ID,DEFAULT_OWNERID,9,buyPrice4,OrderFillState::FULL},
+		OrderMatch{buyOrder5ID,DEFAULT_OWNERID,25,buyPrice4,OrderFillState::FULL},
+		OrderMatch{buyOrder3ID,DEFAULT_OWNERID,9,buyPrice3,OrderFillState::PARTIAL},
+	}}; 
 
-    Fifo MatchingAlgorithm;
-    OrderBook OrderBook_(&MatchingAlgorithm);
-    OrderBook_.chargeTestOrders({PriceLevel1,PriceLevel2},{});
-
-    std::pair<MatchesList,OrderFillState> MatchReturn = OrderBook_.matchSellMarket(sellOrder);
-    EXPECT_EQ(std::get<1>(MatchReturn),FULL);
-    EXPECT_TRUE(equalMatchesList(std::get<0>(MatchReturn),expectedResult));
-
-
+	
+	EXPECT_EQ(std::get<ORDER_STATE>(matchResult),OrderFillState::FULL);
+	EXPECT_TRUE(MatchesListAreEqual(resultMatchesList,expectedMatchesList));
 }
 
 TEST(SELL_MARKET_ORDER,PARTIAL_MATCH){
+	int buyOrder1ID = 1;
+	int buyOrder2ID = 2;
 
+	Price buyPrice1{200,0};
+	PriceLevel* buyPriceLevel1 = createPriceLevel(OrderType::LIMIT,OrderSide::BUY,buyPrice1,
+	{
+		{80,buyOrder1ID},
+	});	
 
+	Price buyPrice2{150,99};
+	PriceLevel* buyPriceLevel2 = createPriceLevel(OrderType::LIMIT,OrderSide::BUY,buyPrice2,
+	{
+		{6,buyOrder2ID},
+	});	
 
-    Price Level1Price(890,2);
-    PriceLevel *PriceLevel1=new PriceLevel(Level1Price);
+	int sellOrderID = 334;	
+	Order *sellOrder  = new Order(OrderType::MARKET,OrderSide::SELL,90,sellOrderID); 		
+   	
+	Fifo fifoAlgorithm;
+	auto matchResult = createOrderBookAndMatch(sellOrder,{buyPriceLevel1,
+	buyPriceLevel2},&fifoAlgorithm);	
 
-    Order *order1=new Order(MARKET,BUY,20,Level1Price.dollars,Level1Price.cents);
-    order1->setId(1);
+	auto resultMatchesList = std::get<MATCHED_ORDERS_LIST>(matchResult); 	
 
-    PriceLevel1->add_order(order1);
+	auto expectedMatchesList = MatchesList{{
+		OrderMatch{buyOrder1ID,DEFAULT_OWNERID,80,buyPrice1,OrderFillState::FULL},
+		OrderMatch{buyOrder2ID,DEFAULT_OWNERID,6,buyPrice2,OrderFillState::FULL},
+	}}; 
 
-
-    //Building second pricelevel
-    Price Level2Price(50,2);
-    PriceLevel *PriceLevel2=new PriceLevel(Level2Price);
-
-    Order *order2=new Order(MARKET,BUY,8,Level2Price.dollars,Level2Price.cents);
-    order2->setId(2);
-
-    PriceLevel2->add_order(order2);
-
-
-    Order *sellOrder=new Order(LIMIT,SELL,50,0,0);
-
-    MatchesList expectedResult;
-
-    OrderMatch match1(DEFAULT_OWNERID,1,20,Level1Price,FULL);
-    OrderMatch match2(DEFAULT_OWNERID,2,8,Level2Price,FULL);
-
-    expectedResult.addMatch(match1);
-    expectedResult.addMatch(match2);
-
-    Fifo MatchingAlgorithm;
-    OrderBook OrderBook_(&MatchingAlgorithm);
-    OrderBook_.chargeTestOrders({PriceLevel1,PriceLevel2},{});
-
-    std::pair<MatchesList,OrderFillState> MatchReturn = OrderBook_.matchSellMarket(sellOrder);
-    EXPECT_EQ(std::get<1>(MatchReturn),PARTIAL);
-    EXPECT_TRUE(equalMatchesList(std::get<0>(MatchReturn),expectedResult));
+	
+	EXPECT_EQ(std::get<ORDER_STATE>(matchResult),OrderFillState::PARTIAL);
+	EXPECT_TRUE(MatchesListAreEqual(resultMatchesList,expectedMatchesList));
 }
 
 
