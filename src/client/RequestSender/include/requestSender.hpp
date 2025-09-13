@@ -34,7 +34,7 @@ class RequestSender{
             {"register",&RequestSender::constructRegisterRequest},
             {"stocks",&RequestSender::constructStocksRequest},
             {"balance",&RequestSender::constructBalanceRequest},
-            {"order",&RequestSender::constructStocksRequest},
+            {"order",&RequestSender::constructNewOrderRequest	},
             {"help",&RequestSender::constructHelpCommand}
         };
 };
